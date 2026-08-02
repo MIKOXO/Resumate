@@ -55,6 +55,8 @@ shadcn/ui on top of Tailwind CSS. Components live in `components/ui/` and are ad
   - **Top bar**: fixed, thin, bottom border (`--border-default`). App name/logo, user email, logout button.
   - **Left panel**: fixed width (~300px), full height below top bar, right border separator. Scrollable list of Job Applying Team members, each a collapsible row — expand to reveal that member's prospects nested underneath. "Add Team Member" action pinned at the top; "Add Prospect" appears inside an expanded team member's group. Each prospect row shows name + last-updated indicator.
   - **Right panel**: flexible width, the active workspace. Selected prospect's name, JD textarea, company name + date inputs, Generate button, and the result/download card once generation completes.
+- **Auth screens** (Signup, Login, Verify Email, Forgot Password, Reset Password): centered card on `--bg-base`, max-width ~400px, `--bg-surface` background, `12px` radius. Verify Email screen uses a 6-digit code input (segmented, one box per digit) with a "resend code" text link below.
+- **Settings**: accessed from the top bar (icon or user menu), opens as a page or modal — same centered-card treatment as auth screens. Fields: name, email, change password (current password required). Save button uses the same primary button style as Generate.
 - **Modals**: centered overlay with backdrop blur, `--bg-elevated` background, `12px` radius. Used for "Add Prospect" upload and "Replace Resume" confirmation.
 - **Empty states**: when no prospect is selected, right panel shows a centered placeholder (icon + short text) — never a blank space.
 - **Loading**: skeleton-based everywhere, shaped to match the content about to appear. No generic spinners.

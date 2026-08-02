@@ -15,25 +15,35 @@ Resumate is a web-based dashboard that automates the resume update step of a job
 
 ## Core User Flow
 
-1. User signs up / logs in.
-2. User adds a Job Applying Team member (e.g. "John") — the colleague whose assigned prospects will be organized under them.
-3. User uploads a prospect's Default Resume (.docx) once, under that team member — saved as a reusable template.
-4. Daily: user expands a team member and selects one of their saved prospects.
-5. User manually copies the job description from the job posting site and pastes it into the system.
-6. User enters company name and date.
-7. User clicks Generate.
-8. System sends the JD to the Gemini API using a fixed prompt and receives a Core Competencies section.
-9. System inserts that section at the end of the resume, matching the resume's existing font/style.
-10. System converts the updated document to PDF and names it `Prospect_Company_MMDDYYYY.pdf`.
-11. User downloads the PDF.
-12. User manually uploads the PDF to Google Drive for the Job Applying team (outside the system).
+1. User signs up with email/password.
+2. System sends a 6-digit verification code to the user's email (Nodemailer + Gmail SMTP).
+3. User enters the code to verify their account; login is blocked until verified.
+4. User logs in.
+5. User adds a Job Applying Team member (e.g. "John") — the colleague whose assigned prospects will be organized under them.
+6. User uploads a prospect's Default Resume (.docx) once, under that team member — saved as a reusable template.
+7. Daily: user expands a team member and selects one of their saved prospects.
+8. User manually copies the job description from the job posting site and pastes it into the system.
+9. User enters company name and date.
+10. User clicks Generate.
+11. System sends the JD to the Gemini API using a fixed prompt and receives a Core Competencies section.
+12. System inserts that section at the end of the resume, matching the resume's existing font/style.
+13. System converts the updated document to PDF and names it `Prospect_Company_MMDDYYYY.pdf`.
+14. User downloads the PDF.
+15. User manually uploads the PDF to Google Drive for the Job Applying team (outside the system).
 
 ## Features
 
 **Auth**
 - Self-signup with email/password
+- Email verification via 6-digit code (Nodemailer + Gmail SMTP), required before login
+- Resend verification code
+- Forgot password: request a reset code by email, enter code + new password to reset
 - Login with JWT session
-- Per-user data isolation (each user sees only their own prospects)
+- Per-user data isolation (each user sees only their own team members and prospects)
+
+**Settings**
+- Edit personal info: name, email
+- Change password (current password required)
 
 **Job Applying Team Management**
 - Add a Job Applying Team member (name only)
@@ -76,8 +86,8 @@ Resumate is a web-based dashboard that automates the resume update step of a job
 - Automatic fetching of Default Resumes from Google Drive
 - Automatic uploading of finished PDFs to Google Drive
 - Role-based permissions or an admin panel beyond basic per-user isolation
-- Password reset flow (manual DB reset acceptable for MVP)
-- Email verification on signup
+- SMS-based verification (email only)
+- OAuth/social login (email/password only)
 - Multi-theme support (dark theme only, no toggle)
 
 ## Success Criteria

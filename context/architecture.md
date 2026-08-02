@@ -14,7 +14,8 @@
 | Frontend font | Urbanist (Google Fonts) | Typography |
 | Backend runtime | Node.js | Server runtime |
 | Backend framework | Express | API gateway, routing, orchestration |
-| Backend auth | JWT + bcrypt | Session tokens, password hashing |
+| Backend auth | JWT + bcryptjs | Session tokens, password hashing |
+| Email | Nodemailer (Gmail SMTP) | Verification codes, password reset codes |
 | Document service | Python (FastAPI) | docx formatting + section insertion |
 | Document library | python-docx | Read/write docx structure and styles |
 | PDF conversion | LibreOffice (headless) | docx → PDF conversion |
@@ -56,7 +57,9 @@ No caching layer in MVP — request volume (15-20/day per user) doesn't justify 
 
 ## Auth and Access Model
 
-- Self-signup: email + password, password hashed with bcrypt before storage.
+- Self-signup: email + password, password hashed with bcryptjs before storage.
+- On signup, a 6-digit verification code (with a short expiry, e.g. 10 minutes) is generated, stored on the User record, and emailed via Nodemailer. The user cannot log in until `emailVerified` is true.
+- Forgot password follows the same code pattern: a 6-digit reset code is generated, stored with an expiry, and emailed. Submitting the correct code allows setting a new password. Codes are single-use — cleared from the User record once consumed.
 - Login returns a JWT, sent by the client on every subsequent request (Axios interceptor attaches it).
 - `authMiddleware` verifies the JWT on protected routes before any controller logic runs.
 - Every Prospect record stores an `ownerId` (the authenticated user) and a `teamMemberId` (which colleague it's organized under). Every TeamMember record stores an `ownerId`.
@@ -78,5 +81,6 @@ No caching layer in MVP — request volume (15-20/day per user) doesn't justify 
 5. **Every route that touches prospect or generation data must pass through `authMiddleware`** — no unauthenticated access to user data, ever.
 6. **The Python service is the only place docx files are opened/modified** — Express never manipulates docx content directly.
 7. **Passwords are never stored or logged in plaintext**, anywhere, under any circumstance.
-8. **Output filenames always follow `Prospect_Company_MMDDYYYY.pdf`** — no ad hoc naming.
-9. **Dark theme is the only theme** — no theme-switching logic is ever introduced into the frontend.
+8. **Verification and reset codes are single-use and time-bound** — cleared after use or expiry, never reused or left valid indefinitely.
+9. **Output filenames always follow `Prospect_Company_MMDDYYYY.pdf`** — no ad hoc naming.
+10. **Dark theme is the only theme** — no theme-switching logic is ever introduced into the frontend.
