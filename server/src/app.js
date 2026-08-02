@@ -1,19 +1,31 @@
 import 'dotenv/config';
 
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
 
 import { connectDB } from './config/db.js';
+import { errorHandler } from './middleware/errorHandler.js';
+import authRoutes from './routes/authRoutes.js';
 
+// Initialize Express app
 const app = express();
 const port = process.env.PORT || 5000;
 
-app.use(cors({ origin: 'http://localhost:5173' }));
+// Middleware
+app.use(cors({ origin: process.env.CLIENT_ORIGIN, credentials: true }));
 app.use(express.json());
+app.use(cookieParser());
 
-app.get('/api/health', (request, response) => {
-  response.json({ status: 'ok' });
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok' });
 });
+
+// Routes
+app.use('/api/auth', authRoutes);
+
+// Error handling middleware
+app.use(errorHandler);
 
 const startServer = async () => {
   await connectDB();
