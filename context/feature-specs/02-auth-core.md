@@ -30,6 +30,14 @@ Not applicable — backend-only feature. No UI in this feature; frontend auth pa
 - `me`: reads `req.user` (set by `authMiddleware`), returns safe user fields. Used by the frontend to hydrate auth state on app load.
 - `logout`: clears the cookie, returns a success response.
 
+### Centralized Error Handler
+
+- Create `server/src/middleware/errorHandler.js` — an Express error-handling middleware (signature `(err, req, res, next)`), registered last in `app.js`, after all routes.
+- Response shape is consistent everywhere: `{ success: false, error: <message> }`.
+- Map known error types to correct status codes: validation errors → `400`, auth failures (invalid credentials, missing/invalid token) → `401`, rate limit → `429` (already handled by `express-rate-limit` itself, but confirm the shape matches this pattern), not found → `404`. Anything unrecognized defaults to `500` with a generic "Something went wrong" message — never leak a raw stack trace or internal error detail to the client.
+- Log the full error server-side (`console.error` is fine for now — no logging library needed yet) for anything that hits the `500` fallback, so failures are debuggable even though the client only sees a generic message.
+- Controllers do not catch-and-format errors themselves. Since this project isn't using Express 5's built-in async error forwarding, wrap controller functions with a small `asyncHandler` utility (`server/src/middleware/asyncHandler.js` — a function that wraps an async route handler and forwards any thrown/rejected error to `next(err)`), rather than adding a new dependency for this. Apply it to every controller function written in this feature and going forward.
+
 ### Cookie Configuration
 
 - Cookie name: `token` (or similar, be consistent).
@@ -53,7 +61,7 @@ No other auth routes yet — verification and password reset routes are added in
 ### Rate Limiting
 
 - Install and configure `express-rate-limit`.
-- Apply a limiter to `/api/auth/signup` and `/api/auth/login` specifically — e.g. a window of a few minutes allowing a handful of attempts, tight enough to block automated brute-force but not so tight it blocks a real person who mistyped their password a couple times.
+- Apply a limiter to `/api/auth/signup` and `/api/auth/login` specifically — a 15-minute window (`windowMs: 15 * 60 * 1000`) allowing 10 attempts per window per IP. This is tight enough to block automated brute-force but loose enough that a real person who mistyped their password a few times isn't locked out mid-session.
 - On limit exceeded, respond `429` with a clear, non-technical error message the frontend can display as-is.
 
 ### CORS Update
@@ -76,6 +84,9 @@ No other auth routes yet — verification and password reset routes are added in
 - [ ] `authMiddleware` correctly blocks access to a route it protects when no valid cookie is present
 - [ ] Logout clears the cookie
 - [ ] Hitting login or signup repeatedly beyond the configured threshold returns `429`, not a stack trace
+- [ ] All error responses (auth failure, validation failure, rate limit) follow the same `{ success: false, error }` shape
+- [ ] No raw stack trace or internal error detail is ever sent in a response body
+- [ ] An unexpected error (e.g. force a DB disconnect) still returns a clean `500` response, not a crashed server
 - [ ] CORS allows the Vite dev origin with credentials — a cross-origin request from the client actually receives and sends the cookie correctly
 - [ ] No console errors or unhandled promise rejections
 - [ ] `npm run build` (or equivalent server start) passes with no errors
