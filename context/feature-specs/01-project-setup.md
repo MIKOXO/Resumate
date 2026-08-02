@@ -1,10 +1,8 @@
 # Unit 01: Project Setup
 
-## Read 'AGENT.md' before starting
-
 ## Goal
 
-Set up the Express server foundation — app entrypoint, environment config, MongoDB Atlas connection, and Cloudflare R2 client config. No routes, controllers, or business logic yet. When this unit is done, the server starts cleanly, connects to MongoDB, and has a working R2 client ready to be used by later units.
+Set up the Express server foundation — app entrypoint, environment config, MongoDB Atlas connection, and Backblaze B2 client config. No routes, controllers, or business logic yet. When this unit is done, the server starts cleanly, connects to MongoDB, and has a working B2 client ready to be used by later units.
 
 ## Design
 
@@ -19,11 +17,10 @@ Not applicable — this is a backend infrastructure unit, no UI.
   PORT=5000
   MONGODB_URI=
   JWT_SECRET=
-  R2_ACCOUNT_ID=
-  R2_ACCESS_KEY_ID=
-  R2_SECRET_ACCESS_KEY=
-  R2_BUCKET_NAME=
-  R2_ENDPOINT=
+  B2_KEY_ID=
+  B2_APPLICATION_KEY=
+  B2_BUCKET_NAME=
+  B2_ENDPOINT=
   ```
 - Create `server/.env.example` with the same keys but empty values — this one IS committed to git, so future setup (or the coworker) knows what's required without seeing real secrets.
 - Load env vars via `dotenv` at the very top of `server/src/app.js`, before anything else runs.
@@ -35,7 +32,7 @@ Not applicable — this is a backend infrastructure unit, no UI.
 
 ### `server/src/config/r2.js`
 
-- Export a configured `@aws-sdk/client-s3` `S3Client` instance pointed at the R2 endpoint (`process.env.R2_ENDPOINT`), using `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` as credentials, region set to `"auto"` (R2 doesn't use AWS regions).
+- Export a configured `@aws-sdk/client-s3` `S3Client` instance pointed at the B2 endpoint (`process.env.B2_ENDPOINT`), using `B2_KEY_ID` / `B2_APPLICATION_KEY` as credentials. Backblaze B2's S3-compatible API requires a real region matching your bucket's region (shown on the bucket details page), not `"auto"` — check the endpoint URL for the region code (e.g. `us-west-004`).
 - Export the client only — do not add upload/download helper functions here. Those belong in a `prospectService` in a later unit; this file's only job is to configure and export the client.
 
 ### `server/src/app.js`
@@ -62,4 +59,4 @@ All required packages are already installed (`express`, `mongoose`, `dotenv`, `@
 - [ ] `.env` is confirmed present in `.gitignore` and does NOT show up in `git status`
 - [ ] `.env.example` exists and is tracked by git, with empty values only
 - [ ] No console errors or unhandled promise rejections on startup
-- [ ] R2 client exports without throwing (no actual upload/download test yet — that's Unit 06)
+- [ ] B2 client exports without throwing (no actual upload/download test yet — that's Unit 06)

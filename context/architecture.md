@@ -2,56 +2,56 @@
 
 ## Stack Table
 
-| Layer | Technology | Role |
-|---|---|---|
-| Frontend framework | React (Vite) | UI rendering |
-| Frontend styling | Tailwind CSS | Utility-first styling |
-| Frontend components | shadcn/ui | Pre-built accessible UI components |
-| Frontend icons | Lucide React | Iconography |
-| Frontend animation | Framer Motion | Transitions/animations |
-| Frontend HTTP | Axios | API calls from client to server |
-| Frontend state | Redux Toolkit | Auth state, prospect list, generation status |
-| Frontend font | Urbanist (Google Fonts) | Typography |
-| Backend runtime | Node.js | Server runtime |
-| Backend framework | Express | API gateway, routing, orchestration |
-| Backend auth | JWT + bcryptjs | Session tokens, password hashing |
-| Email | Nodemailer (Gmail SMTP) | Verification codes, password reset codes |
-| Document service | Python (FastAPI) | docx formatting + section insertion |
-| Document library | python-docx | Read/write docx structure and styles |
-| PDF conversion | LibreOffice (headless) | docx → PDF conversion |
-| AI generation | Gemini API | Core Competencies text generation |
-| File storage | Cloudflare R2 | Stores prospect resume .docx files |
-| Database | MongoDB Atlas (M0) | Users, prospect metadata, file references |
+| Layer               | Technology              | Role                                         |
+| ------------------- | ----------------------- | -------------------------------------------- |
+| Frontend framework  | React (Vite)            | UI rendering                                 |
+| Frontend styling    | Tailwind CSS            | Utility-first styling                        |
+| Frontend components | shadcn/ui               | Pre-built accessible UI components           |
+| Frontend icons      | Lucide React            | Iconography                                  |
+| Frontend animation  | Framer Motion           | Transitions/animations                       |
+| Frontend HTTP       | Axios                   | API calls from client to server              |
+| Frontend state      | Redux Toolkit           | Auth state, prospect list, generation status |
+| Frontend font       | Urbanist (Google Fonts) | Typography                                   |
+| Backend runtime     | Node.js                 | Server runtime                               |
+| Backend framework   | Express                 | API gateway, routing, orchestration          |
+| Backend auth        | JWT + bcryptjs          | Session tokens, password hashing             |
+| Email               | Nodemailer (Gmail SMTP) | Verification codes, password reset codes     |
+| Document service    | Python (FastAPI)        | docx formatting + section insertion          |
+| Document library    | python-docx             | Read/write docx structure and styles         |
+| PDF conversion      | LibreOffice (headless)  | docx → PDF conversion                        |
+| AI generation       | Gemini API              | Core Competencies text generation            |
+| File storage        | Backblaze B2            | Stores prospect resume .docx files           |
+| Database            | MongoDB Atlas (M0)      | Users, prospect metadata, file references    |
 
 ## System Boundaries (Folder Ownership)
 
-| Folder | Owns |
-|---|---|
-| `client/src/components` | Presentational UI, no business logic |
-| `client/src/pages` | Screen-level composition (Login, Signup, Dashboard) |
-| `client/src/store/slices` | Client + server-derived state, async thunks |
-| `client/src/services` | All Axios calls to the backend — the only layer allowed to call `server` |
-| `client/src/hooks` | Reusable selector/dispatch wrappers per slice |
-| `server/src/routes` | Endpoint definitions only — maps HTTP verb + path to a controller, no logic |
-| `server/src/controllers` | Request parsing, input validation, calls services, shapes response — no business logic |
-| `server/src/services` | All real logic: R2 access, Gemini calls, Python service calls, JWT issuance/verification, password hashing |
-| `server/src/models` | MongoDB schemas only (User, TeamMember, Prospect) — no logic |
-| `server/src/middleware` | JWT verification, error handling — cross-cutting concerns |
-| `server/src/config` | DB connection, R2 client config |
-| `docx-service/` | Owns all docx manipulation and PDF conversion — the only place `python-docx` and LibreOffice are invoked |
+| Folder                    | Owns                                                                                                       |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `client/src/components`   | Presentational UI, no business logic                                                                       |
+| `client/src/pages`        | Screen-level composition (Login, Signup, Dashboard)                                                        |
+| `client/src/store/slices` | Client + server-derived state, async thunks                                                                |
+| `client/src/services`     | All Axios calls to the backend — the only layer allowed to call `server`                                   |
+| `client/src/hooks`        | Reusable selector/dispatch wrappers per slice                                                              |
+| `server/src/routes`       | Endpoint definitions only — maps HTTP verb + path to a controller, no logic                                |
+| `server/src/controllers`  | Request parsing, input validation, calls services, shapes response — no business logic                     |
+| `server/src/services`     | All real logic: B2 access, Gemini calls, Python service calls, JWT issuance/verification, password hashing |
+| `server/src/models`       | MongoDB schemas only (User, TeamMember, Prospect) — no logic                                               |
+| `server/src/middleware`   | JWT verification, error handling — cross-cutting concerns                                                  |
+| `server/src/config`       | DB connection, B2 client config                                                                            |
+| `docx-service/`           | Owns all docx manipulation and PDF conversion — the only place `python-docx` and LibreOffice are invoked   |
 
 **Rule of thumb**: if it's business logic, it lives in a `services/` folder (client or server). Routes, controllers, and models stay thin.
 
 ## Storage Model
 
-| Data | Where | Why |
-|---|---|---|
-| User accounts (email, hashed password) | MongoDB Atlas | Small, structured, needs querying |
-| Team member records (name, owning userId) | MongoDB Atlas | Small, structured — groups prospects under the correct colleague |
-| Prospect metadata (name, R2 file key, upload date, teamMemberId, owning userId) | MongoDB Atlas | Small, structured, needs querying |
-| Prospect resume files (.docx) | Cloudflare R2, keyed `userId/teamMemberId/prospectId.docx` | Binary file, not suited to MongoDB document storage |
-| Job description text | Nowhere — in-memory only, discarded after the request completes | Not needed after generation; avoids storing more prospect-adjacent data than necessary |
-| Generated PDF | Nowhere persistent — streamed to the user as a download, not stored server-side | User downloads immediately; no need to retain past outputs in MVP |
+| Data                                                                            | Where                                                                           | Why                                                                                    |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| User accounts (email, hashed password)                                          | MongoDB Atlas                                                                   | Small, structured, needs querying                                                      |
+| Team member records (name, owning userId)                                       | MongoDB Atlas                                                                   | Small, structured — groups prospects under the correct colleague                       |
+| Prospect metadata (name, B2 file key, upload date, teamMemberId, owning userId) | MongoDB Atlas                                                                   | Small, structured, needs querying                                                      |
+| Prospect resume files (.docx)                                                   | Backblaze B2, keyed `userId/teamMemberId/prospectId.docx`                       | Binary file, not suited to MongoDB document storage                                    |
+| Job description text                                                            | Nowhere — in-memory only, discarded after the request completes                 | Not needed after generation; avoids storing more prospect-adjacent data than necessary |
+| Generated PDF                                                                   | Nowhere persistent — streamed to the user as a download, not stored server-side | User downloads immediately; no need to retain past outputs in MVP                      |
 
 No caching layer in MVP — request volume (15-20/day per user) doesn't justify one.
 
@@ -75,7 +75,7 @@ No caching layer in MVP — request volume (15-20/day per user) doesn't justify 
 ## Invariants
 
 1. **No business logic in routes, controllers, or models** — it belongs in a `services/` file.
-2. **No file bytes stored in MongoDB** — resumes live only in Cloudflare R2; MongoDB holds references, never binary content.
+2. **No file bytes stored in MongoDB** — resumes live only in Backblaze B2; MongoDB holds references, never binary content.
 3. **Every prospect record is scoped to exactly one `ownerId` and one `teamMemberId`** — no prospect is ever queryable without an owner filter matching the authenticated user, and every team member record is likewise scoped to its `ownerId`.
 4. **Job description text is never persisted** — used for one generation request, then discarded.
 5. **Every route that touches prospect or generation data must pass through `authMiddleware`** — no unauthenticated access to user data, ever.
