@@ -4,15 +4,15 @@ Update this file after every meaningful implementation change.
 
 ## Current Phase
 
-- Not started
+- Feature 02: TBD
 
 ## Current Goal
 
-- 
+- TBD
 
 ## Completed
 
-- None yet.
+- Feature 01: Project Setup — Express server, MongoDB Atlas connection, Backblaze B2 client configuration, and health check completed.
 
 ## In Progress
 
@@ -20,7 +20,7 @@ Update this file after every meaningful implementation change.
 
 ## Next Up
 
-- 
+- Feature 02: TBD
 
 ## Open Questions
 
@@ -28,8 +28,8 @@ Update this file after every meaningful implementation change.
 
 ## Architecture Decisions
 
-- 
+- File storage uses Backblaze B2 through its S3-compatible API and the existing AWS SDK v3 client.
 
 ## Session Notes
 
-- 
+- Feature 01 static checks and B2 client configuration passed. Mike confirmed the live MongoDB Atlas connection works.
