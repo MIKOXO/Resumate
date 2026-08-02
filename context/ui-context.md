@@ -8,28 +8,28 @@ Dark only. No light mode, no theme toggle — ever. The design language is a dar
 
 All components must use these tokens — no hardcoded hex values anywhere.
 
-| Role | CSS Variable | Value |
-|---|---|---|
-| Page background | `--bg-base` | `#0A0A0B` |
-| Surface (cards, panels) | `--bg-surface` | `#141416` |
-| Elevated (modals, dropdowns, popovers) | `--bg-elevated` | `#1C1C1F` |
-| Primary text | `--text-primary` | `#FAFAFA` |
-| Muted text | `--text-muted` | `#A1A1AA` |
-| Disabled text | `--text-disabled` | `#5C5C61` |
-| Primary accent | `--accent-primary` | `#FFFFFF` |
-| Accent hover | `--accent-hover` | `#E4E4E7` |
-| Border (default) | `--border-default` | `#2A2A2E` |
-| Border (strong / inputs) | `--border-strong` | `#3A3A3F` |
-| Success | `--state-success` | `#3DD68C` |
-| Success background | `--state-success-bg` | `#123324` |
-| Error | `--state-error` | `#F16063` |
-| Error background | `--state-error-bg` | `#3A1616` |
-| Warning | `--state-warning` | `#F5B94D` |
+| Role                                   | CSS Variable         | Value     |
+| -------------------------------------- | -------------------- | --------- |
+| Page background                        | `--bg-base`          | `#0A0A0B` |
+| Surface (cards, panels)                | `--bg-surface`       | `#141416` |
+| Elevated (modals, dropdowns, popovers) | `--bg-elevated`      | `#1C1C1F` |
+| Primary text                           | `--text-primary`     | `#FAFAFA` |
+| Muted text                             | `--text-muted`       | `#A1A1AA` |
+| Disabled text                          | `--text-disabled`    | `#5C5C61` |
+| Primary accent                         | `--accent-primary`   | `#FFFFFF` |
+| Accent hover                           | `--accent-hover`     | `#E4E4E7` |
+| Border (default)                       | `--border-default`   | `#2A2A2E` |
+| Border (strong / inputs)               | `--border-strong`    | `#3A3A3F` |
+| Success                                | `--state-success`    | `#3DD68C` |
+| Success background                     | `--state-success-bg` | `#123324` |
+| Error                                  | `--state-error`      | `#F16063` |
+| Error background                       | `--state-error-bg`   | `#3A1616` |
+| Warning                                | `--state-warning`    | `#F5B94D` |
 
 ## Typography
 
-| Role | Font | Variable |
-|---|---|---|
+| Role                | Font     | Variable      |
+| ------------------- | -------- | ------------- |
 | UI text (all of it) | Urbanist | `--font-sans` |
 
 Urbanist is the only font in the project — no monospace font needed (no code display in this app).
@@ -38,12 +38,12 @@ Urbanist is the only font in the project — no monospace font needed (no code d
 
 Minimal, professional rounding only. No `rounded-xl`/`2xl`/`3xl` (Tailwind default scale) anywhere.
 
-| Context | Class / Value |
-|---|---|
-| Inline / small UI (inputs, small buttons, badges) | `rounded-md` → `6px` |
-| Buttons, cards | `rounded-lg` → `8px` |
-| Modals, overlays, larger panels | `12px` (custom `--radius-lg` token, not Tailwind's `xl`) |
-| Avatars, icon-only circular buttons, status dots | `rounded-full` — the only case full rounding is allowed |
+| Context                                           | Class / Value                                            |
+| ------------------------------------------------- | -------------------------------------------------------- |
+| Inline / small UI (inputs, small buttons, badges) | `rounded-md` → `6px`                                     |
+| Buttons, cards                                    | `rounded-lg` → `8px`                                     |
+| Modals, overlays, larger panels                   | `12px` (custom `--radius-lg` token, not Tailwind's `xl`) |
+| Avatars, icon-only circular buttons, status dots  | `rounded-full` — the only case full rounding is allowed  |
 
 ## Component Library
 
@@ -56,6 +56,7 @@ shadcn/ui on top of Tailwind CSS. Components live in `components/ui/` and are ad
   - **Left panel**: fixed width (~300px), full height below top bar, right border separator. Scrollable list of Job Applying Team members, each a collapsible row — expand to reveal that member's prospects nested underneath. "Add Team Member" action pinned at the top; "Add Prospect" appears inside an expanded team member's group. Each prospect row shows name + last-updated indicator.
   - **Right panel**: flexible width, the active workspace. Selected prospect's name, JD textarea, company name + date inputs, Generate button, and the result/download card once generation completes.
 - **Auth screens** (Signup, Login, Verify Email, Forgot Password, Reset Password): centered card on `--bg-base`, max-width ~400px, `--bg-surface` background, `12px` radius. Verify Email screen uses a 6-digit code input (segmented, one box per digit) with a "resend code" text link below.
+- **Password strength indicator** (signup + reset password forms): a thin animated bar below the password field, filling and changing color as the user types, driven by Framer Motion (animate width/color transitions, not instant snaps). Three tiers — weak (`--state-error`), medium (`--state-warning`), strong (`--state-success`) — based on the same policy enforced server-side (length, uppercase, lowercase, number, special character). Pair with a short text label ("Weak", "Medium", "Strong") next to the bar, not just color alone, for accessibility.
 - **Settings**: accessed from the top bar (icon or user menu), opens as a page or modal — same centered-card treatment as auth screens. Fields: name, email, change password (current password required). Save button uses the same primary button style as Generate.
 - **Modals**: centered overlay with backdrop blur, `--bg-elevated` background, `12px` radius. Used for "Add Prospect" upload and "Replace Resume" confirmation.
 - **Empty states**: when no prospect is selected, right panel shows a centered placeholder (icon + short text) — never a blank space.
