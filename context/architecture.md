@@ -2,26 +2,28 @@
 
 ## Stack Table
 
-| Layer               | Technology              | Role                                         |
-| ------------------- | ----------------------- | -------------------------------------------- |
-| Frontend framework  | React (Vite)            | UI rendering                                 |
-| Frontend styling    | Tailwind CSS            | Utility-first styling                        |
-| Frontend components | shadcn/ui               | Pre-built accessible UI components           |
-| Frontend icons      | Lucide React            | Iconography                                  |
-| Frontend animation  | Framer Motion           | Transitions/animations                       |
-| Frontend HTTP       | Axios                   | API calls from client to server              |
-| Frontend state      | Redux Toolkit           | Auth state, prospect list, generation status |
-| Frontend font       | Urbanist (Google Fonts) | Typography                                   |
-| Backend runtime     | Node.js                 | Server runtime                               |
-| Backend framework   | Express                 | API gateway, routing, orchestration          |
-| Backend auth        | JWT + bcryptjs          | Session tokens, password hashing             |
-| Email               | Nodemailer (Gmail SMTP) | Verification codes, password reset codes     |
-| Document service    | Python (FastAPI)        | docx formatting + section insertion          |
-| Document library    | python-docx             | Read/write docx structure and styles         |
-| PDF conversion      | LibreOffice (headless)  | docx → PDF conversion                        |
-| AI generation       | Gemini API              | Core Competencies text generation            |
-| File storage        | Backblaze B2            | Stores prospect resume .docx files           |
-| Database            | MongoDB Atlas (M0)      | Users, prospect metadata, file references    |
+| Layer                  | Technology                        | Role                                                                  |
+| ---------------------- | --------------------------------- | --------------------------------------------------------------------- |
+| Frontend framework     | React (Vite)                      | UI rendering                                                          |
+| Frontend styling       | Tailwind CSS                      | Utility-first styling                                                 |
+| Frontend components    | shadcn/ui                         | Pre-built accessible UI components                                    |
+| Frontend icons         | Lucide React                      | Iconography                                                           |
+| Frontend animation     | Framer Motion                     | Transitions/animations                                                |
+| Frontend HTTP          | Axios                             | API calls from client to server                                       |
+| Frontend state         | Redux Toolkit                     | Auth state, prospect list, generation status                          |
+| Frontend font          | Urbanist (Google Fonts)           | Typography                                                            |
+| Backend runtime        | Node.js                           | Server runtime                                                        |
+| Backend framework      | Express                           | API gateway, routing, orchestration                                   |
+| Backend auth           | JWT + bcryptjs                    | Session tokens, password hashing                                      |
+| Backend auth transport | httpOnly cookie (`cookie-parser`) | JWT stored in an httpOnly, secure cookie — never exposed to client JS |
+| Backend rate limiting  | `express-rate-limit`              | Throttles auth endpoints against brute-force attempts                 |
+| Email                  | Nodemailer (Gmail SMTP)           | Verification codes, password reset codes                              |
+| Document service       | Python (FastAPI)                  | docx formatting + section insertion                                   |
+| Document library       | python-docx                       | Read/write docx structure and styles                                  |
+| PDF conversion         | LibreOffice (headless)            | docx → PDF conversion                                                 |
+| AI generation          | Gemini API                        | Core Competencies text generation                                     |
+| File storage           | Backblaze B2                      | Stores prospect resume .docx files                                    |
+| Database               | MongoDB Atlas (M0)                | Users, prospect metadata, file references                             |
 
 ## System Boundaries (Folder Ownership)
 
@@ -60,6 +62,11 @@ No caching layer in MVP — request volume (15-20/day per user) doesn't justify 
 - Self-signup: email + password, password hashed with bcryptjs before storage.
 - On signup, a 6-digit verification code (with a short expiry, e.g. 10 minutes) is generated, stored on the User record, and emailed via Nodemailer. The user cannot log in until `emailVerified` is true.
 - Forgot password follows the same code pattern: a 6-digit reset code is generated, stored with an expiry, and emailed. Submitting the correct code allows setting a new password. Codes are single-use — cleared from the User record once consumed.
+- On login, the JWT is set as an **httpOnly, secure, sameSite cookie** — never returned in the JSON response body, never stored in localStorage/Redux. This protects the token from being read by injected client-side scripts (XSS).
+- The frontend never holds the raw token. `authSlice` tracks only `isAuthenticated` and the current user's non-sensitive info (name, email), hydrated via a `GET /api/auth/me` call on app load (reads the cookie server-side, returns user info if valid).
+- Every request that needs auth relies on the browser automatically attaching the cookie — Axios must be configured with `withCredentials: true`, and CORS must allow `credentials: true` with an explicit client origin (not `*`).
+- `authMiddleware` reads the JWT from the cookie (via `cookie-parser`), not from an `Authorization` header.
+- Login, signup, forgot-password, and resend-code endpoints are rate-limited (`express-rate-limit`) to prevent brute-force and spam abuse — e.g. a modest cap per IP per time window, tight enough to block automated attempts without blocking normal retry behavior from a real user who mistyped a password.
 - Login returns a JWT, sent by the client on every subsequent request (Axios interceptor attaches it).
 - `authMiddleware` verifies the JWT on protected routes before any controller logic runs.
 - Every Prospect record stores an `ownerId` (the authenticated user) and a `teamMemberId` (which colleague it's organized under). Every TeamMember record stores an `ownerId`.
@@ -82,5 +89,7 @@ No caching layer in MVP — request volume (15-20/day per user) doesn't justify 
 6. **The Python service is the only place docx files are opened/modified** — Express never manipulates docx content directly.
 7. **Passwords are never stored or logged in plaintext**, anywhere, under any circumstance.
 8. **Verification and reset codes are single-use and time-bound** — cleared after use or expiry, never reused or left valid indefinitely.
-9. **Output filenames always follow `Prospect_Company_MMDDYYYY.pdf`** — no ad hoc naming.
-10. **Dark theme is the only theme** — no theme-switching logic is ever introduced into the frontend.
+9. **The JWT is never exposed to client-side JavaScript** — it lives only in an httpOnly cookie, never in a JSON response body, never in localStorage or Redux state.
+10. **Auth endpoints prone to abuse (login, signup, forgot-password, resend-code) are always rate-limited** — no new auth endpoint ships without a rate limit applied.
+11. **Output filenames always follow `Prospect_Company_MMDDYYYY.pdf`** — no ad hoc naming.
+12. **Dark theme is the only theme** — no theme-switching logic is ever introduced into the frontend.
