@@ -2,12 +2,14 @@ import { Router } from 'express';
 
 import * as authController from '../controllers/authController.js';
 import { authMiddleware } from '../middleware/authMiddleware.js';
-import { authLimiter } from '../middleware/rateLimiter.js';
+import { authLimiter, resendCodeLimiter } from '../middleware/rateLimiter.js';
 
 const router = Router();
 
 router.post('/signup', authLimiter, authController.signup);
 router.post('/login', authLimiter, authController.login);
+router.post('/verify-email', authMiddleware, authController.verifyEmail);
+router.post('/resend-code', resendCodeLimiter, authController.resendCode);
 router.get('/me', authMiddleware, authController.me);
 router.post('/logout', authController.logout);
 

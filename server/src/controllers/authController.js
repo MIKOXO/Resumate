@@ -83,3 +83,39 @@ export const logout = (req, res) => {
   res.clearCookie(COOKIE_NAME, cookieOptions());
   res.json({ success: true, data: null });
 };
+
+export const verifyEmail = async (req, res, next) => {
+  try {
+    const { code } = req.body;
+
+    if (!code || typeof code !== 'string' || !code.trim()) {
+      return res.status(400).json({ success: false, error: 'Verification code is required.' });
+    }
+
+    const user = await authService.verifyEmail({ userId: req.user, code: code.trim() });
+    const token = authService.generateToken(user._id.toString());
+    res.cookie(COOKIE_NAME, token, cookieOptions());
+    res.json({ success: true, data: user });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const resendCode = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ success: false, error: 'A valid email address is required.' });
+    }
+
+    const user = await authService.findUserByEmail(email.trim());
+    if (user) {
+      await authService.resendVerificationCode({ userId: user._id });
+    }
+
+    res.json({ success: true, data: null });
+  } catch (err) {
+    next(err);
+  }
+};
