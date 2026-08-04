@@ -10,16 +10,6 @@ const cookieOptions = () => ({
   maxAge: SEVEN_DAYS_MS,
 });
 
-const validatePassword = (password) => {
-  const missing = [];
-  if (password.length < 8) missing.push('at least 8 characters');
-  if (!/[A-Z]/.test(password)) missing.push('one uppercase letter');
-  if (!/[a-z]/.test(password)) missing.push('one lowercase letter');
-  if (!/[0-9]/.test(password)) missing.push('one number');
-  if (!/[^A-Za-z0-9]/.test(password)) missing.push('one special character');
-  return missing;
-};
-
 export const signup = async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
@@ -36,7 +26,7 @@ export const signup = async (req, res, next) => {
       return res.status(400).json({ success: false, error: 'Password is required.' });
     }
 
-    const missing = validatePassword(password);
+    const missing = authService.validatePassword(password);
     if (missing.length > 0) {
       return res.status(400).json({
         success: false,
@@ -115,6 +105,50 @@ export const resendCode = async (req, res, next) => {
     }
 
     res.json({ success: true, data: null });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ success: false, error: 'A valid email address is required.' });
+    }
+
+    await authService.requestPasswordReset({ email: email.trim() });
+    res.json({ success: true, data: null, message: 'If that email exists, a reset code has been sent.' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const resetPassword = async (req, res, next) => {
+  try {
+    const { code, newPassword, confirmPassword } = req.body;
+
+    if (!code || typeof code !== 'string' || !code.trim()) {
+      return res.status(400).json({ success: false, error: 'Reset code is required.' });
+    }
+
+    if (!newPassword || typeof newPassword !== 'string') {
+      return res.status(400).json({ success: false, error: 'New password is required.' });
+    }
+
+    if (!confirmPassword || typeof confirmPassword !== 'string') {
+      return res.status(400).json({ success: false, error: 'Confirm password is required.' });
+    }
+
+    if (confirmPassword !== newPassword) {
+      return res.status(400).json({ success: false, error: 'Passwords do not match.' });
+    }
+
+    const user = await authService.resetPassword({ code: code.trim(), newPassword });
+    const token = authService.generateToken(user._id.toString());
+    res.cookie(COOKIE_NAME, token, cookieOptions());
+    res.json({ success: true, data: user });
   } catch (err) {
     next(err);
   }

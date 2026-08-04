@@ -14,6 +14,9 @@ const userSchema = new mongoose.Schema({
   verificationCode: { type: String, default: null },
   verificationCodeExpiry: { type: Date, default: null },
   lastCodeSentAt: { type: Date, default: null },
+  resetCode: { type: String, default: null },
+  resetCodeExpiry: { type: Date, default: null },
+  lastResetCodeSentAt: { type: Date, default: null },
   createdAt: { type: Date, default: Date.now },
 });
 

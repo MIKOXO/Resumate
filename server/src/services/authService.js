@@ -6,23 +6,31 @@ import { sendEmail } from './emailService.js';
 
 const SAFE_FIELDS = '_id name email emailVerified createdAt';
 
-const VERIFICATION_CODE_TTL_MS = 10 * 60 * 1000;
+const CODE_TTL_MS = 10 * 60 * 1000;
 const RESEND_COOLDOWN_MS = 60 * 1000;
 
-const CODE_SENSITIVE_FIELDS = ['password', 'verificationCode', 'verificationCodeExpiry', 'lastCodeSentAt'];
+const SENSITIVE_FIELDS = [
+  'password',
+  'verificationCode',
+  'verificationCodeExpiry',
+  'lastCodeSentAt',
+  'resetCode',
+  'resetCodeExpiry',
+  'lastResetCodeSentAt',
+];
 
 const toSafeUser = (user) => {
   const obj = user.toObject({ versionKey: false });
-  CODE_SENSITIVE_FIELDS.forEach((field) => delete obj[field]);
+  SENSITIVE_FIELDS.forEach((field) => delete obj[field]);
   return obj;
 };
 
 /**
  * @returns {{ code: string, expiresAt: Date }} 6-digit code (string, leading zeros preserved) + expiry
  */
-export const generateVerificationCode = () => {
+export const generateCode = () => {
   const code = String(Math.floor(Math.random() * 1000000)).padStart(6, '0');
-  const expiresAt = new Date(Date.now() + VERIFICATION_CODE_TTL_MS);
+  const expiresAt = new Date(Date.now() + CODE_TTL_MS);
   return { code, expiresAt };
 };
 
@@ -32,6 +40,27 @@ const sendVerificationEmail = ({ to, name, code }) =>
     subject: 'Your Resumate verification code',
     html: `<p>Hi ${name},</p><p>Your Resumate verification code is: <strong>${code}</strong></p><p>It expires in 10 minutes.</p>`,
   });
+
+const sendResetEmail = ({ to, name, code }) =>
+  sendEmail({
+    to,
+    subject: 'Your Resumate password reset code',
+    html: `<p>Hi ${name},</p><p>Your Resumate password reset code is: <strong>${code}</strong></p><p>It expires in 10 minutes.</p>`,
+  });
+
+/**
+ * @param {string} password
+ * @returns {string[]} Empty if valid, otherwise the list of missing requirements
+ */
+export const validatePassword = (password) => {
+  const missing = [];
+  if (password.length < 8) missing.push('at least 8 characters');
+  if (!/[A-Z]/.test(password)) missing.push('one uppercase letter');
+  if (!/[a-z]/.test(password)) missing.push('one lowercase letter');
+  if (!/[0-9]/.test(password)) missing.push('one number');
+  if (!/[^A-Za-z0-9]/.test(password)) missing.push('one special character');
+  return missing;
+};
 
 /**
  * @param {{ name: string, email: string, password: string }} params
@@ -48,7 +77,7 @@ export const signup = async ({ name, email, password }) => {
   const hash = await bcrypt.hash(password, 12);
   const user = await User.create({ name, email, password: hash });
 
-  const { code, expiresAt } = generateVerificationCode();
+  const { code, expiresAt } = generateCode();
   user.verificationCode = code;
   user.verificationCodeExpiry = expiresAt;
   user.lastCodeSentAt = new Date();
@@ -188,7 +217,7 @@ export const resendVerificationCode = async ({ userId }) => {
     }
   }
 
-  const { code, expiresAt } = generateVerificationCode();
+  const { code, expiresAt } = generateCode();
   user.verificationCode = code;
   user.verificationCodeExpiry = expiresAt;
   user.lastCodeSentAt = new Date();
@@ -202,4 +231,78 @@ export const resendVerificationCode = async ({ userId }) => {
     sendErr.status = 502;
     throw sendErr;
   }
+};
+
+/**
+ * @param {{ email: string }} params
+ * @returns {Promise<void>} Resolves silently for unknown emails (enumeration protection)
+ */
+export const requestPasswordReset = async ({ email }) => {
+  const user = await User.findOne({ email });
+  if (!user) return;
+
+  if (user.lastResetCodeSentAt) {
+    const remainingMs = RESEND_COOLDOWN_MS - (Date.now() - new Date(user.lastResetCodeSentAt).getTime());
+    if (remainingMs > 0) {
+      const remainingSeconds = Math.ceil(remainingMs / 1000);
+      const err = new Error(
+        `Please wait ${remainingSeconds} seconds before requesting another code.`
+      );
+      err.status = 429;
+      throw err;
+    }
+  }
+
+  const { code, expiresAt } = generateCode();
+  user.resetCode = code;
+  user.resetCodeExpiry = expiresAt;
+  user.lastResetCodeSentAt = new Date();
+  await user.save();
+
+  try {
+    await sendResetEmail({ to: user.email, name: user.name, code });
+  } catch (err) {
+    console.error('Failed to send password reset email:', err);
+    const sendErr = new Error('Could not send the password reset email. Please try again.');
+    sendErr.status = 502;
+    throw sendErr;
+  }
+};
+
+/**
+ * @param {{ code: string, newPassword: string }} params
+ * @returns {Promise<object>} Safe user fields
+ */
+export const resetPassword = async ({ code, newPassword }) => {
+  const user = await User.findOne({
+    resetCode: code,
+    resetCodeExpiry: { $gt: new Date() },
+  }).select('+password');
+  if (!user) {
+    const err = new Error('Invalid or expired reset code. Please request a new one.');
+    err.status = 400;
+    throw err;
+  }
+
+  const missing = validatePassword(newPassword);
+  if (missing.length > 0) {
+    const err = new Error(`Password must contain: ${missing.join(', ')}.`);
+    err.status = 400;
+    throw err;
+  }
+
+  const samePassword = await bcrypt.compare(newPassword, user.password);
+  if (samePassword) {
+    const err = new Error('New password must be different from your current password.');
+    err.status = 400;
+    throw err;
+  }
+
+  user.password = await bcrypt.hash(newPassword, 12);
+  user.resetCode = null;
+  user.resetCodeExpiry = null;
+  user.lastResetCodeSentAt = null;
+  await user.save();
+
+  return toSafeUser(user);
 };

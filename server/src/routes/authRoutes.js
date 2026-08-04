@@ -10,6 +10,8 @@ router.post('/signup', authLimiter, authController.signup);
 router.post('/login', authLimiter, authController.login);
 router.post('/verify-email', authMiddleware, authController.verifyEmail);
 router.post('/resend-code', resendCodeLimiter, authController.resendCode);
+router.post('/forgot-password', resendCodeLimiter, authController.forgotPassword);
+router.post('/reset-password', authLimiter, authController.resetPassword);
 router.get('/me', authMiddleware, authController.me);
 router.post('/logout', authController.logout);
 
