@@ -7,6 +7,7 @@ import express from 'express';
 import { connectDB } from './config/db.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import authRoutes from './routes/authRoutes.js';
+import teamMemberRoutes from './routes/teamMemberRoutes.js';
 
 // Initialize Express app
 const app = express();
@@ -23,6 +24,7 @@ app.get('/api/health', (req, res) => {
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/team-members', teamMemberRoutes);
 
 // Error handling middleware
 app.use(errorHandler);
