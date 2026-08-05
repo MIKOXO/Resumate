@@ -24,17 +24,27 @@ export const listTeamMembers = async ({ ownerId }) => {
 
 /**
  * @param {{ ownerId: string, teamMemberId: string }} params
- * @returns {Promise<void>}
+ * @returns {Promise<object>} TeamMember document if owned by the user
  */
-export const deleteTeamMember = async ({ ownerId, teamMemberId }) => {
+export const getOwnedTeamMember = async ({ ownerId, teamMemberId }) => {
   const teamMember = await TeamMember.findOne({ _id: teamMemberId, ownerId });
   if (!teamMember) {
     const err = new Error('Team member not found.');
     err.status = 404;
     throw err;
   }
+  return teamMember;
+};
 
-  // TODO: cascade-delete prospects once prospectService exists (Feature 06)
+/**
+ * @param {{ ownerId: string, teamMemberId: string }} params
+ * @returns {Promise<void>}
+ */
+export const deleteTeamMember = async ({ ownerId, teamMemberId }) => {
+  await getOwnedTeamMember({ ownerId, teamMemberId });
+
+  const { deleteAllProspectsForTeamMember } = await import('./prospectService.js');
+  await deleteAllProspectsForTeamMember({ ownerId, teamMemberId });
 
   await TeamMember.deleteOne({ _id: teamMemberId, ownerId });
 };
