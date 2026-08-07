@@ -18,14 +18,15 @@ Update this file after every meaningful implementation change.
 - Feature 04: Password Reset — User model extended with `resetCode`/`resetCodeExpiry`/`lastResetCodeSentAt`; shared `generateCode` helper and `validatePassword` extracted into authService (single source of truth, also used by signup); `requestPasswordReset` (enumeration-safe, 60s cooldown, resend-style limiter) and `resetPassword` (looks up user by `resetCode` + unexpired `resetCodeExpiry`, single combined "invalid or expired reset code" error, no email on submit; strength → bcrypt same-password rejection before any hash/save → hash+save, clears code fields, sets login cookie via controller); routes `POST /api/auth/forgot-password` (resendCodeLimiter) and `POST /api/auth/reset-password` (authLimiter). Syntax, pure logic, and validation-path checks passed; live e2e verification handled by Mike (Atlas connectivity restored on his side).
 - Feature 05: Team Member CRUD — TeamMember model (name, indexed ownerId), teamMemberService (create/list/delete scoped to ownerId; delete has `// TODO: cascade-delete prospects once prospectService exists (Feature 06)`), controller + routes protected by authMiddleware. e2e verified: create 201/ownerId tag, empty name 400, owner-scoped list (no cross-visibility), delete 200 then 404, cross-user/unknown delete 404, no-cookie 401.
 - Feature 06: Prospect CRUD — Prospect model, prospectService (upload/list/replace/delete + deleteAllProspectsForTeamMember), multer controller + routes, all authMiddleware-gated. Feature 05's cascade-delete TODO closed. e2e verified against live DB + B2: upload/replace/delete with real B2 objects, renamed .txt and >5MB rejected with 400, duplicate names allowed, owner-scoped list, cross-user 404, no-cookie 401. Test data cleaned up.
+- Feature 07: Python Docx Service — `docx-service/main.py` (FastAPI, POST /generate-section, try/except → JSON error), `docx-service/formatter.py` (body style detection by frequency tally, header style detection by bold/all-caps/size signals + known header words + dominant pattern, insert_core_competencies appends header + bullet paragraphs via in-memory BytesIO), `docx-service/requirements.txt`. Service starts cleanly with uvicorn. Marked complete by Mike.
 
 ## In Progress
 
-- None yet.
+- None.
 
 ## Next Up
 
-- Feature 07: (not yet written)
+- Feature 08: (not yet written)
 
 ## Open Questions
 
@@ -49,3 +50,4 @@ Update this file after every meaningful implementation change.
 - Feature 04 refinement: `resetPassword` no longer requires email — client sends only `code` + `newPassword`; user looked up by `resetCode` + unexpired `resetCodeExpiry` (`User.findOne({ resetCode: code, resetCodeExpiry: { $gt: new Date() } })`). Single combined "invalid or expired reset code" error replaces the previously distinct invalid/expired messages (no useful distinction to surface without email). Email still required on `forgotPassword` (request step).
 - Feature 05: TeamMember model + service + controller + routes (POST/GET /api/team-members, DELETE /:id, authMiddleware-gated). Prospect cascade-delete left as TODO in teamMemberService for Feature 06 — must wire `prospectService` deletion (and B2 file removal) there when Prospect model lands. All test data cleaned up.
 - Feature 06: Notes — cascade delete uses a shared `getOwnedTeamMember` helper + dynamic `import()` to avoid an ESM circular import (prospectService also imports teamMemberService). DOCX MIME kept as a local const in prospectService + prospectController (no shared constants file exists yet). S3 DeleteObject is idempotent, so already-missing keys naturally proceed to the Mongo delete. Test data cleaned up.
+- Feature 07 (in progress): `docx-service/requirements.txt` (fastapi, uvicorn, python-docx, python-multipart), `main.py` (FastAPI, POST /generate-section, try/except → JSON error), `formatter.py` (detect_body_style tallies font+size across all paragraphs; detect_header_style scores candidates on bold+all-caps+size signals, prefers known header words, picks dominant style; insert_core_competencies appends header + bullet paragraphs using in-memory BytesIO). Fallback logs via print + logging.warning including filename. Must be tested against 5+ real resumes before marking complete.
