@@ -27,8 +27,8 @@
 ## Express (Backend)
 
 - Routes only map HTTP verb + path to a controller — no logic in route files.
-- Controllers validate input and shape responses — no direct DB, R2, or Gemini calls in a controller; that belongs in a service.
-- Services contain all business logic and are the only layer that talks to MongoDB, Cloudflare R2, Gemini, or the Python docx-service.
+- Controllers validate input and shape responses — no direct DB, B2, or Groq calls in a controller; that belongs in a service.
+- Services contain all business logic and are the only layer that talks to MongoDB, Backblaze B2, Groq, or the Python docx-service.
 - Every protected route runs through `authMiddleware` before reaching a controller — no exceptions.
 - Errors are passed to a centralized `errorHandler` middleware — controllers don't format error responses themselves.
 
@@ -55,7 +55,7 @@
 - `client/src/hooks/` — reusable selector/dispatch wrappers per slice
 - `server/src/routes/` — endpoint definitions only
 - `server/src/controllers/` — request parsing, validation, response shaping
-- `server/src/services/` — all business logic: R2, Gemini, Python service, auth, team members, prospects
+- `server/src/services/` — all business logic: B2, Groq, Python service, auth, team members, prospects
 - `server/src/models/` — MongoDB schemas only (User, TeamMember, Prospect)
 - `server/src/middleware/` — auth verification, centralized error handling
 - `server/src/config/` — DB connection, R2 client config

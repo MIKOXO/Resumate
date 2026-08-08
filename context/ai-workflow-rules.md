@@ -20,7 +20,7 @@ These are rules, not guidelines. Follow them exactly while building this project
 
 - Split a task into smaller steps if it would require touching more than one layer (e.g. a route, a service, and a frontend component). Build and verify the backend first, then the frontend.
 - Split a task if it mixes two unrelated concerns (e.g. "add auth and set up R2 upload"). Treat these as two units, not one.
-- Split a task if it's large enough that partial failure would be hard to diagnose (e.g. "build the whole generate flow"). Break it into: JD input → Gemini call → docx insertion → PDF conversion → download. Verify each step independently.
+- Split a task if it's large enough that partial failure would be hard to diagnose (e.g. "build the whole generate flow"). Break it into: JD input → Groq call → docx insertion → PDF conversion → download. Verify each step independently.
 - Always treat client and server work as separate units. Do them in sequence, and verify each before starting the next. Never build both simultaneously in one pass.
 
 ## Handling Missing or Ambiguous Requirements
@@ -60,7 +60,7 @@ Answer all of the following before starting the next unit. If any answer is no, 
 
 ## Additional Rules
 
-- Do not hallucinate APIs or packages. If you are unsure whether a library method, Gemini API parameter, or R2 SDK call exists as described, verify it against real documentation before writing code that depends on it.
+- Do not hallucinate APIs or packages. If you are unsure whether a library method, Groq API parameter, or B2 SDK call exists as described, verify it against real documentation before writing code that depends on it.
 - Prefer the smallest correct diff. Do not rewrite a full file when a five-line edit completes the unit.
 - State every assumption out loud in your response, not just in a code comment. If you filled a gap — a default value, an error message, a naming choice — say so explicitly.
 - Never write secrets or credentials into code, including placeholder-looking real values, even temporarily.

@@ -21,26 +21,26 @@
 | Document service       | Python (FastAPI)                  | docx formatting + section insertion                                   |
 | Document library       | python-docx                       | Read/write docx structure and styles                                  |
 | PDF conversion         | LibreOffice (headless)            | docx → PDF conversion                                                 |
-| AI generation          | Gemini API                        | Core Competencies text generation                                     |
+| AI generation          | Groq API                          | Core Competencies text generation                                     |
 | File storage           | Backblaze B2                      | Stores prospect resume .docx files                                    |
 | Database               | MongoDB Atlas (M0)                | Users, prospect metadata, file references                             |
 
 ## System Boundaries (Folder Ownership)
 
-| Folder                    | Owns                                                                                                       |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `client/src/components`   | Presentational UI, no business logic                                                                       |
-| `client/src/pages`        | Screen-level composition (Login, Signup, Dashboard)                                                        |
-| `client/src/store/slices` | Client + server-derived state, async thunks                                                                |
-| `client/src/services`     | All Axios calls to the backend — the only layer allowed to call `server`                                   |
-| `client/src/hooks`        | Reusable selector/dispatch wrappers per slice                                                              |
-| `server/src/routes`       | Endpoint definitions only — maps HTTP verb + path to a controller, no logic                                |
-| `server/src/controllers`  | Request parsing, input validation, calls services, shapes response — no business logic                     |
-| `server/src/services`     | All real logic: B2 access, Gemini calls, Python service calls, JWT issuance/verification, password hashing |
-| `server/src/models`       | MongoDB schemas only (User, TeamMember, Prospect) — no logic                                               |
-| `server/src/middleware`   | JWT verification, error handling — cross-cutting concerns                                                  |
-| `server/src/config`       | DB connection, B2 client config                                                                            |
-| `docx-service/`           | Owns all docx manipulation and PDF conversion — the only place `python-docx` and LibreOffice are invoked   |
+| Folder                    | Owns                                                                                                     |
+| ------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `client/src/components`   | Presentational UI, no business logic                                                                     |
+| `client/src/pages`        | Screen-level composition (Login, Signup, Dashboard)                                                      |
+| `client/src/store/slices` | Client + server-derived state, async thunks                                                              |
+| `client/src/services`     | All Axios calls to the backend — the only layer allowed to call `server`                                 |
+| `client/src/hooks`        | Reusable selector/dispatch wrappers per slice                                                            |
+| `server/src/routes`       | Endpoint definitions only — maps HTTP verb + path to a controller, no logic                              |
+| `server/src/controllers`  | Request parsing, input validation, calls services, shapes response — no business logic                   |
+| `server/src/services`     | All real logic: B2 access, Groq calls, Python service calls, JWT issuance/verification, password hashing |
+| `server/src/models`       | MongoDB schemas only (User, TeamMember, Prospect) — no logic                                             |
+| `server/src/middleware`   | JWT verification, error handling — cross-cutting concerns                                                |
+| `server/src/config`       | DB connection, B2 client config                                                                          |
+| `docx-service/`           | Owns all docx manipulation and PDF conversion — the only place `python-docx` and LibreOffice are invoked |
 
 **Rule of thumb**: if it's business logic, it lives in a `services/` folder (client or server). Routes, controllers, and models stay thin.
 
@@ -75,9 +75,9 @@ No caching layer in MVP — request volume (15-20/day per user) doesn't justify 
 
 ## AI / Background Processing
 
-- Gemini API call is synchronous, request-scoped — no queue or background job in MVP. The user waits for a direct response (target: under ~15 seconds end-to-end including docx processing and PDF conversion).
+- Groq API call is synchronous, request-scoped — no queue or background job in MVP. The user waits for a direct response (target: under ~15 seconds end-to-end including docx processing and PDF conversion).
 - The Python docx-service is called synchronously by Express per generate request — no async job queue. If volume grows enough that generation becomes a bottleneck, this is the first place to introduce a queue (e.g. BullMQ), but it's explicitly out of scope for MVP.
-- No retries are persisted; a failed Gemini or docx-service call surfaces an error to the user, who can just click Generate again.
+- No retries are persisted; a failed Groq or docx-service call surfaces an error to the user, who can just click Generate again.
 
 ## Invariants
 

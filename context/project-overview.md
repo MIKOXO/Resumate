@@ -25,7 +25,7 @@ Resumate is a web-based dashboard that automates the resume update step of a job
 8. User manually copies the job description from the job posting site and pastes it into the system.
 9. User enters company name and date.
 10. User clicks Generate.
-11. System sends the JD to the Gemini API using a fixed prompt and receives a Core Competencies section.
+11. System sends the JD to the Groq API using a fixed prompt and receives a Core Competencies section.
 12. System inserts that section at the end of the resume, matching the resume's existing font/style.
 13. System converts the updated document to PDF and names it `Prospect_Company_MMDDYYYY.pdf`.
 14. User downloads the PDF.
@@ -34,6 +34,7 @@ Resumate is a web-based dashboard that automates the resume update step of a job
 ## Features
 
 **Auth**
+
 - Self-signup with email/password
 - Email verification via 6-digit code (Nodemailer + Gmail SMTP), required before login
 - Resend verification code
@@ -42,30 +43,35 @@ Resumate is a web-based dashboard that automates the resume update step of a job
 - Per-user data isolation (each user sees only their own team members and prospects)
 
 **Settings**
+
 - Edit personal info: name, email
 - Change password (current password required)
 
 **Job Applying Team Management**
+
 - Add a Job Applying Team member (name only)
 - View team members as collapsible groups, each expandable to reveal their prospects
 - Delete a team member (and, by extension, their prospects)
 
 **Prospect Template Management**
+
 - Upload a .docx resume once per prospect, nested under a team member
 - View/select from a saved prospect list within a team member group
 - Replace/re-upload a prospect's resume
 - Delete a prospect
 
 **Resume Generation**
+
 - Paste job description text
 - Enter company name and date
-- Generate Core Competencies section via Gemini API (fixed prompt)
+- Generate Core Competencies section via Groq API (fixed prompt)
 - Auto-insert section at end of resume, matching original formatting
 - Convert to PDF
 - Auto-name output file (`Prospect_Company_MMDDYYYY.pdf`)
 - Download generated PDF
 
 **Error Handling**
+
 - Reject non-.docx uploads
 - Clear error messages on generation/conversion failure
 
@@ -74,7 +80,7 @@ Resumate is a web-based dashboard that automates the resume update step of a job
 - Self-signup and login (JWT-based)
 - Uploading and storing prospect resumes as reusable templates (Cloudflare R2 + MongoDB Atlas)
 - Manual paste of job description text
-- AI-generated Core Competencies section (Gemini API)
+- AI-generated Core Competencies section (Groq API)
 - Automated formatting-matched insertion into the resume (Python/python-docx)
 - Automated docx → PDF conversion (LibreOffice headless)
 - Automated file naming
