@@ -7,6 +7,7 @@ import express from 'express';
 import { connectDB } from './config/db.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import authRoutes from './routes/authRoutes.js';
+import generateRoutes from './routes/generateRoutes.js';
 import prospectRoutes from './routes/prospectRoutes.js';
 import teamMemberRoutes from './routes/teamMemberRoutes.js';
 
@@ -27,6 +28,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/team-members', teamMemberRoutes);
 app.use('/api/team-members', prospectRoutes);
+app.use('/api/generate', generateRoutes);
 
 // Error handling middleware
 app.use(errorHandler);
