@@ -44,7 +44,7 @@ Resumate is a web-based dashboard that automates the resume update step of a job
 
 **Settings**
 
-- Edit personal info: name, email
+- Edit personal info: name only (email is fixed at signup, tied to verification)
 - Change password (current password required)
 
 **Job Applying Team Management**
