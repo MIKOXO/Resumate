@@ -153,3 +153,37 @@ export const resetPassword = async (req, res, next) => {
     next(err);
   }
 };
+
+export const updateName = async (req, res, next) => {
+  try {
+    const { name } = req.body;
+
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({ success: false, error: 'Name is required.' });
+    }
+
+    const user = await authService.updateName({ userId: req.user, name: name.trim() });
+    res.json({ success: true, data: user });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const changePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || typeof currentPassword !== 'string') {
+      return res.status(400).json({ success: false, error: 'Current password is required.' });
+    }
+
+    if (!newPassword || typeof newPassword !== 'string') {
+      return res.status(400).json({ success: false, error: 'New password is required.' });
+    }
+
+    await authService.changePassword({ userId: req.user, currentPassword, newPassword });
+    res.json({ success: true, data: null });
+  } catch (err) {
+    next(err);
+  }
+};

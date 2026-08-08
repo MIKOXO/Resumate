@@ -63,6 +63,20 @@ export const validatePassword = (password) => {
 };
 
 /**
+ * @param {string} newPassword
+ * @param {string} currentHash
+ * @returns {Promise<void>} Throws a 400 error if newPassword matches the current hash
+ */
+const rejectSamePassword = async (newPassword, currentHash) => {
+  const isSame = await bcrypt.compare(newPassword, currentHash);
+  if (isSame) {
+    const err = new Error('New password must be different from your current password.');
+    err.status = 400;
+    throw err;
+  }
+};
+
+/**
  * @param {{ name: string, email: string, password: string }} params
  * @returns {Promise<object>} Safe user fields (no password hash or code fields)
  */
@@ -291,17 +305,67 @@ export const resetPassword = async ({ code, newPassword }) => {
     throw err;
   }
 
-  const samePassword = await bcrypt.compare(newPassword, user.password);
-  if (samePassword) {
-    const err = new Error('New password must be different from your current password.');
-    err.status = 400;
-    throw err;
-  }
+  await rejectSamePassword(newPassword, user.password);
 
   user.password = await bcrypt.hash(newPassword, 12);
   user.resetCode = null;
   user.resetCodeExpiry = null;
   user.lastResetCodeSentAt = null;
+  await user.save();
+
+  return toSafeUser(user);
+};
+
+/**
+ * @param {{ userId: string, name: string }} params
+ * @returns {Promise<object>} Safe updated user fields
+ */
+export const updateName = async ({ userId, name }) => {
+  if (!name || typeof name !== 'string' || !name.trim()) {
+    const err = new Error('Name is required.');
+    err.status = 400;
+    throw err;
+  }
+
+  const user = await User.findByIdAndUpdate(userId, { name: name.trim() }, { new: true });
+  if (!user) {
+    const err = new Error('User not found.');
+    err.status = 404;
+    throw err;
+  }
+
+  return toSafeUser(user);
+};
+
+/**
+ * @param {{ userId: string, currentPassword: string, newPassword: string }} params
+ * @returns {Promise<object>} Safe user fields
+ */
+export const changePassword = async ({ userId, currentPassword, newPassword }) => {
+  const user = await User.findById(userId).select('+password');
+  if (!user) {
+    const err = new Error('User not found.');
+    err.status = 404;
+    throw err;
+  }
+
+  const currentMatch = await bcrypt.compare(currentPassword, user.password);
+  if (!currentMatch) {
+    const err = new Error('Current password is incorrect.');
+    err.status = 400;
+    throw err;
+  }
+
+  const missing = validatePassword(newPassword);
+  if (missing.length > 0) {
+    const err = new Error(`Password must contain: ${missing.join(', ')}.`);
+    err.status = 400;
+    throw err;
+  }
+
+  await rejectSamePassword(newPassword, user.password);
+
+  user.password = await bcrypt.hash(newPassword, 12);
   await user.save();
 
   return toSafeUser(user);

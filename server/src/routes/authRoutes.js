@@ -13,6 +13,8 @@ router.post('/resend-code', resendCodeLimiter, authController.resendCode);
 router.post('/forgot-password', resendCodeLimiter, authController.forgotPassword);
 router.post('/reset-password', authLimiter, authController.resetPassword);
 router.get('/me', authMiddleware, authController.me);
+router.patch('/me', authMiddleware, authController.updateName);
+router.patch('/password', authMiddleware, authController.changePassword);
 router.post('/logout', authController.logout);
 
 export default router;

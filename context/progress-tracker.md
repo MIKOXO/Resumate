@@ -4,7 +4,7 @@ Update this file after every meaningful implementation change.
 
 ## Current Phase
 
-- TBD (next spec not yet written)
+- Feature 12+ (frontend features begin, spec not yet written)
 
 ## Current Goal
 
@@ -22,6 +22,7 @@ Update this file after every meaningful implementation change.
 - Feature 08: PDF Conversion & Naming — `docx-service/converter.py` (convert_to_pdf — uuid4 temp filenames, soffice --headless subprocess, always cleans up in finally block, raises RuntimeError with stderr on failure), `docx-service/naming.py` (build_filename — strips invalid chars, preserves internal spaces, parses YYYY-MM-DD → MMDDYYYY), `main.py` extended with POST /convert-to-pdf (multipart: file + prospect_name + company_name + date, returns PDF with Content-Disposition filename, 500 JSON on failure). Conversion verified working against real .docx file.
 - Feature 09: Groq Integration — `server/src/services/groqService.js` (`generateCoreCompetencies` — OpenAI-compatible client pointed at Groq base URL, lazy-initialized so server starts cleanly without key set, fixed SQL Server prompt verbatim, strips leading `*`/`-`/`•` chars, drops empty lines, returns string array). `openai` package installed. `GROQ_API_KEY` added to `.env.example`. Live test confirmed: clean bullet array returned, no markdown chars, invalid key surfaces clear 401 error.
 - Feature 10: Generate Endpoint — `server/src/services/generateService.js` (5-step orchestration: B2 GetObject download → Groq bullets → Python `/generate-section` → Python `/convert-to-pdf` → stream PDF back; `Promise.race` 30s timeout returns 504; each step throws a distinct named error), `generateController.js` (validates all 5 required fields, streams PDF with `Content-Type: application/pdf` + `Content-Disposition` from Python service), `generateRoutes.js` (`POST /api/generate`, auth-gated), mounted in `app.js`. `DOCX_SERVICE_URL` added to `.env.example`.
+- Feature 11: Settings Endpoints — `authService.updateName` + `changePassword` (current-password check, strength policy, same-password rejection via shared `rejectSamePassword` helper reused by `resetPassword`). Controllers `updateName` + `changePassword` (success-only). Routes `PATCH /api/auth/me` + `PATCH /api/auth/password`, both behind `authMiddleware`. E2e verified: name update + empty-name 400, password change + wrong-current/same/weak rejections, `email` field ignored, 401 without cookie, `{ success: false, error }` shape, clean start. Final backend feature.
 
 ## In Progress
 
@@ -29,7 +30,7 @@ Update this file after every meaningful implementation change.
 
 ## Next Up
 
-- TBD (next spec not yet written)
+- Feature 12+ (frontend features; spec not yet written)
 
 ## Open Questions
 
@@ -57,3 +58,4 @@ Update this file after every meaningful implementation change.
 - Feature 08 (complete): `docx-service/converter.py` (convert_to_pdf — uuid4 temp filenames, soffice --headless subprocess, always cleans up in finally block, raises RuntimeError with stderr on failure), `docx-service/naming.py` (build_filename — strips invalid chars, preserves internal spaces, parses YYYY-MM-DD → MMDDYYYY), `main.py` extended with POST /convert-to-pdf (multipart: file + prospect_name + company_name + date, returns PDF with Content-Disposition filename, 500 JSON on failure). Conversion verified working against real .docx file.
 - Feature 09 (complete): `server/src/services/groqService.js` created — `openai` npm package used as OpenAI-compatible client pointed at `https://api.groq.com/openai/v1`. Client is lazy-initialized (not at module load) so server starts cleanly without `GROQ_API_KEY` set. Fixed SQL Server DBA prompt used verbatim. `generateCoreCompetencies` substitutes `{JD_TEXT}`, calls `llama-3.3-70b-versatile` via chat completions, post-processes response (strips leading `*`/`-`/`•`, trims whitespace, drops empty lines), returns string array. Invalid key surfaces as `"Groq API request failed: 401 Invalid API Key"` with `status: 502`. `GROQ_API_KEY` added to `.env.example`. Live test confirmed: 7 clean SQL Server bullets returned, no markdown chars, no empty lines, invalid key error clear and specific.
 - Feature 10 (complete): `server/src/services/generateService.js` — 5-step chain (B2 GetObject → Groq → Python `/generate-section` → Python `/convert-to-pdf` → return PDF bytes + `Content-Disposition`), each step throws a distinct named error, full chain wrapped in `Promise.race` with 30s/504 timeout. `generateController.js` validates all 5 required body fields, streams PDF back. `generateRoutes.js` mounts `POST /api/generate` behind `authMiddleware`. Wired in `app.js`. `DOCX_SERVICE_URL` added to `.env.example`.
+- Feature 11 (complete): `rejectSamePassword` extracted as the shared same-password guard and reused by `resetPassword`. Both settings routes behind `authMiddleware` (unlike the unauthenticated forgot/reset flow). No rate limiters per spec — endpoints require an authenticated session (scoping note). E2E verified against live Atlas; test user cleaned up.
