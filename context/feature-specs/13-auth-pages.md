@@ -8,6 +8,8 @@ Build Login, Signup, Verify Email, and Forgot/Reset Password pages — fully wir
 
 Per `ui-context.md`: centered card on `--bg-base`, max-width ~400px, `--bg-surface` background, `12px` radius (`rounded-lg`). Additional constraints specific to this feature:
 
+- **shadcn/ui components used**: `Card` (the auth screen container itself), `Input` (email, password, name, confirm-password fields — wrapped by `PasswordInput` for the password variants), `Button` (submit buttons), `Label` (field labels). Add these to `client/src/components/ui/` per Feature 12's manual-scaffold pattern (copy from ui.shadcn.com, adapt to this project's tokens) — do not build custom unstyled `<input>`/`<button>` elements from scratch when a shadcn primitive already covers the need.
+
 - **Compact, no scroll** — every auth screen must fit within a typical viewport with zero scrolling. Keep vertical spacing tight and deliberate; this is a hard constraint, not a suggestion.
 - **Subtle border, minimal shadow** — `border border-default`, at most a very soft `shadow-sm`-equivalent (near-none) — no heavy card elevation.
 - **Icons**: all input icons sit on the right side of the field (not left, per explicit instruction), using Lucide React at `h-4 w-4` per `ui-context.md`'s inline sizing.
@@ -17,6 +19,15 @@ Per `ui-context.md`: centered card on `--bg-base`, max-width ~400px, `--bg-surfa
 - **Block errors**: for server-side/request-level failures (wrong credentials, expired code, etc.) — a bordered banner above the form fields, `--state-error` border and text, `--state-error-bg` background, `8px` radius. Clear, specific, human-readable message — reuse exactly what the backend returns where it's already clear (per Features 02-04's specific error messaging), don't paraphrase it into something vaguer.
 
 ## Implementation
+
+### shadcn Components (add first, before building pages)
+
+Per Feature 12's manual-scaffold pattern — copy each from ui.shadcn.com's docs, adapt to this project's `cn()` helper and `@theme` tokens, place in `client/src/components/ui/`:
+
+- `Card` (and `CardHeader`/`CardContent` if the reference implementation splits them)
+- `Input`
+- `Button`
+- `Label`
 
 ### Shared Components
 
@@ -110,6 +121,7 @@ None new — `react-router-dom`, `@reduxjs/toolkit`, `react-redux`, `axios`, `fr
 - [ ] Forgot Password flow: email step → OTP step (client-only format check, no premature verification) → reset step, with the actual code validity only checked at final submission — confirm an expired/wrong code correctly surfaces its error on the reset step, not the OTP step
 - [ ] Signup redirects to Verify Email, not directly to dashboard
 - [ ] Auth guard correctly redirects unauthenticated users away from `/dashboard` and authenticated users away from `/login`/`/signup`
+- [ ] `Card`, `Input`, `Button`, and `Label` shadcn components exist in `components/ui/` and are actually used across all four pages — no custom-built raw `<input>`/`<button>` duplicating what these already provide
 - [ ] No console errors or warnings
 - [ ] Responsive at both mobile and desktop widths
 - [ ] `npm run build` passes with no errors
