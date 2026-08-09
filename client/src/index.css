@@ -1,1 +1,54 @@
 @import 'tailwindcss';
+@import 'tw-animate-css';
+
+:root {
+  --bg-base: #0a0a0b;
+  --bg-surface: #141416;
+  --bg-elevated: #1c1c1f;
+  --text-primary: #fafafa;
+  --text-muted: #a1a1aa;
+  --text-disabled: #5c5c61;
+  --accent-primary: #ffffff;
+  --accent-hover: #e4e4e7;
+  --border-default: #2a2a2e;
+  --border-strong: #3a3a3f;
+  --state-success: #3dd68c;
+  --state-success-bg: #123324;
+  --state-error: #f16063;
+  --state-error-bg: #3a1616;
+  --state-warning: #f5b94d;
+}
+
+@theme inline {
+  --color-base: var(--bg-base);
+  --color-surface: var(--bg-surface);
+  --color-elevated: var(--bg-elevated);
+  --color-primary: var(--text-primary);
+  --color-muted: var(--text-muted);
+  --color-disabled: var(--text-disabled);
+  --color-accent-primary: var(--accent-primary);
+  --color-accent-hover: var(--accent-hover);
+  --color-default: var(--border-default);
+  --color-strong: var(--border-strong);
+  --color-state-success: var(--state-success);
+  --color-state-success-bg: var(--state-success-bg);
+  --color-state-error: var(--state-error);
+  --color-state-error-bg: var(--state-error-bg);
+  --color-state-warning: var(--state-warning);
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+}
+
+@theme {
+  --font-sans: 'Urbanist', sans-serif;
+}
+
+@layer base {
+  body {
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+  }
+}
