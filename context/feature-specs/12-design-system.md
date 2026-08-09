@@ -26,20 +26,51 @@ Every token below comes directly from `ui-context.md` — do not invent, adjust,
   });
   ```
 
-### Tailwind Config
+### Tailwind v4 Config
 
-- Configure `tailwind.config.js` with custom CSS variable-backed colors matching the table in `ui-context.md` exactly: `bg-base`, `bg-surface`, `bg-elevated`, `text-primary`, `text-muted`, `text-disabled`, `accent-primary`, `accent-hover`, `border-default`, `border-strong`, `state-success`, `state-success-bg`, `state-error`, `state-error-bg`, `state-warning`.
-- Define these as actual CSS custom properties in `client/src/index.css` (under `:root`, since this app is dark-only — no `:root` vs `.dark` split needed), then reference them in Tailwind config via `var(--token-name)` so components can use plain Tailwind utility classes (e.g. `bg-surface`, `text-primary`) that resolve to the correct hex values.
-- Set the border radius scale in Tailwind config: `sm: 6px`, `md: 8px`, `lg: 12px` (be deliberate about naming so it doesn't collide confusingly with Tailwind's built-in scale — confirm the final class names read cleanly, e.g. `rounded-sm`/`rounded-md`/`rounded-lg` mapped to `6px`/`8px`/`12px`).
+This project uses Tailwind v4, which is CSS-first — there is no `tailwind.config.js` to fill out the way Tailwind v3 projects work. Do not create one; do not install `postcss`/`autoprefixer` for this (v4 doesn't need them, it uses the `@tailwindcss/vite` plugin directly).
+
+- In `client/vite.config.js`, import and add the `@tailwindcss/vite` plugin to the `plugins` array.
+- In `client/src/index.css`, use `@import "tailwindcss";` at the top (replaces the old `@tailwind base/components/utilities` three-line directive from v3).
+- Define the design tokens from `ui-context.md` inside a `@theme` block in `index.css` — this is how v4 replaces `tailwind.config.js`'s `theme.extend.colors`. Example shape (fill in the real values from `ui-context.md`'s color table, do not approximate):
+
+  ```css
+  @theme {
+    --color-bg-base: #0a0a0b;
+    --color-bg-surface: #141416;
+    --color-bg-elevated: #1c1c1f;
+    --color-text-primary: #fafafa;
+    --color-text-muted: #a1a1aa;
+    --color-text-disabled: #5c5c61;
+    --color-accent-primary: #ffffff;
+    --color-accent-hover: #e4e4e7;
+    --color-border-default: #2a2a2e;
+    --color-border-strong: #3a3a3f;
+    --color-state-success: #3dd68c;
+    --color-state-success-bg: #123324;
+    --color-state-error: #f16063;
+    --color-state-error-bg: #3a1616;
+    --color-state-warning: #f5b94d;
+
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+
+    --font-sans: 'Urbanist', sans-serif;
+  }
+  ```
+
+- With this `@theme` block, Tailwind v4 auto-generates the matching utility classes (`bg-surface`, `text-primary`, `rounded-sm`, `font-sans`, etc.) — no separate config file mapping needed, the CSS variable names drive the class names directly.
 
 ### Urbanist Font
 
 - Add the Urbanist font via Google Fonts `<link>` tags in `client/index.html` (weights: at minimum 400, 500, 600, 700 — covers regular through bold usage across the app).
-- Set `--font-sans: 'Urbanist', sans-serif` in `index.css`, apply it as the base font on `body` via Tailwind's `fontFamily` config so it's the default everywhere without needing to repeat a class on every element.
+- `--font-sans` is already defined in the `@theme` block above — apply `font-sans` on `body` (or a root wrapper) so Urbanist is the default everywhere without repeating a class on every element.
 
 ### shadcn/ui Init
 
-- Run `npx shadcn@latest init`, configured for the dark-only theme (no light/dark toggle setup — decline any "add dark mode support" prompts the CLI offers, since this app never needs a toggle).
+- Run `npx shadcn@latest init` — confirm it detects Tailwind v4 correctly (shadcn's CLI supports v4, but its setup flow differs slightly from v3: it won't generate/expect a `tailwind.config.js`, and works directly against the `@theme` block in `index.css`). If the CLI's prompts seem to assume v3 conventions, stop and flag it rather than forcing a v3-style setup on a v4 project.
+- Configured for the dark-only theme (no light/dark toggle setup — decline any "add dark mode support" prompts the CLI offers, since this app never needs a toggle).
 - Confirm the generated `components.json` points components at `client/src/components/ui/`, matching the directory structure already defined in `architecture.md`.
 - Do not add individual components yet (button, input, etc.) — those get added as each later feature actually needs them, not preemptively here.
 
@@ -51,7 +82,8 @@ Every token below comes directly from `ui-context.md` — do not invent, adjust,
 
 ## Dependencies
 
-None new — `tailwindcss`, `postcss`, `autoprefixer` already installed from initial setup; shadcn's own dependencies (`class-variance-authority`, `clsx`, `tailwind-merge`, `tailwindcss-animate`) install automatically via its CLI.
+- `@tailwindcss/vite` (Tailwind v4's Vite plugin — replaces the v3 `postcss`/`autoprefixer` pattern; if `tailwindcss` v4 is already installed but `@tailwindcss/vite` isn't, install it now)
+- shadcn's own dependencies (`class-variance-authority`, `clsx`, `tailwind-merge`, `tailwindcss-animate`) install automatically via its CLI
 
 ## Verify when done
 
