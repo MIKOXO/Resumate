@@ -67,7 +67,7 @@ No other auth routes yet — verification and password reset routes are added in
 ### CORS Update
 
 - Update the `cors()` config in `app.js` (from Feature 01) to `{ origin: process.env.CLIENT_ORIGIN, credentials: true }` — required for cookies to be sent/received cross-origin between the Vite dev server and the Express server.
-- Add `CLIENT_ORIGIN` to `.env` and `.env.example` (e.g. `http://localhost:5173`).
+- Add `CLIENT_ORIGIN` to `.env` and `.env.example` (`http://localhost:3000` — Vite is configured to run on port 3000 in this project, not its 5173 default).
 
 ## Dependencies
 
