@@ -23,6 +23,7 @@
 - One component, one responsibility — split a component the moment it's doing layout AND data logic AND conditional rendering for multiple states.
 - Loading, error, and empty states are handled explicitly in every data-driven component — no unguarded assumptions that data exists.
 - No inline styles — Tailwind utility classes only, per `ui-context.md`.
+- shadcn/ui components are added manually (copied from ui.shadcn.com's docs and adapted to this project's `cn()` helper and design tokens), not via the `shadcn` CLI — the CLI proved unreliable against this project's Tailwind v4 + custom-token setup during Feature 12. Once a component is added to `components/ui/`, it's treated the same as a CLI-generated one per `ai-workflow-rules.md` (extend/wrap, don't edit directly).
 
 ## Express (Backend)
 

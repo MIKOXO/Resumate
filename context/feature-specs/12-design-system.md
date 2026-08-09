@@ -67,12 +67,24 @@ This project uses Tailwind v4, which is CSS-first — there is no `tailwind.conf
 - Add the Urbanist font via Google Fonts `<link>` tags in `client/index.html` (weights: at minimum 400, 500, 600, 700 — covers regular through bold usage across the app).
 - `--font-sans` is already defined in the `@theme` block above — apply `font-sans` on `body` (or a root wrapper) so Urbanist is the default everywhere without repeating a class on every element.
 
-### shadcn/ui Init
+### shadcn/ui Setup (Manual Scaffold)
 
-- Run `npx shadcn@latest init` — confirm it detects Tailwind v4 correctly (shadcn's CLI supports v4, but its setup flow differs slightly from v3: it won't generate/expect a `tailwind.config.js`, and works directly against the `@theme` block in `index.css`). If the CLI's prompts seem to assume v3 conventions, stop and flag it rather than forcing a v3-style setup on a v4 project.
-- Configured for the dark-only theme (no light/dark toggle setup — decline any "add dark mode support" prompts the CLI offers, since this app never needs a toggle).
-- Confirm the generated `components.json` points components at `client/src/components/ui/`, matching the directory structure already defined in `architecture.md`.
-- Do not add individual components yet (button, input, etc.) — those get added as each later feature actually needs them, not preemptively here.
+The `shadcn` CLI (both the classic pinned version and the current `@latest` v4) is unreliable for this project as of implementation time — the classic CLI is blocked by registry version drift against the new component registry format, and the current v4 CLI imposes its own preset theme/font system (e.g. Geist, Base UI/Radix presets) that conflicts with this project's Urbanist font and custom tokens. Do not attempt to run either CLI. Instead, manually scaffold what `shadcn init` would normally produce:
+
+- Create `client/components.json` by hand, matching what a `new-york-v4` style, CSS-variables-based init would produce — pointing components at `client/src/components/ui/`.
+- Create `client/src/lib/utils.js` with the standard `cn()` helper (combines `clsx` + `tailwind-merge`):
+
+  ```js
+  import { clsx } from 'clsx';
+  import { twMerge } from 'tailwind-merge';
+
+  export function cn(...inputs) {
+    return twMerge(clsx(inputs));
+  }
+  ```
+
+- Install the four dependencies shadcn components rely on: `class-variance-authority`, `clsx`, `tailwind-merge`, `tailwindcss-animate`.
+- Do not add individual UI components (button, input, etc.) via any CLI in this or later features — since the CLI path is unreliable, components should be added by copying the source directly from shadcn's component documentation/registry site (ui.shadcn.com) and adapting it to this project's `cn()` helper and `@theme` tokens, one component at a time, as each later feature actually needs it.
 
 ### Base App Shell
 
