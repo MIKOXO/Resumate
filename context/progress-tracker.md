@@ -4,11 +4,11 @@ Update this file after every meaningful implementation change.
 
 ## Current Phase
 
-- Feature 12+ (frontend features begin, spec not yet written)
+- (none — all features through 12 complete)
 
 ## Current Goal
 
-- TBD (next spec not yet written)
+- TBD
 
 ## Completed
 
@@ -23,14 +23,15 @@ Update this file after every meaningful implementation change.
 - Feature 09: Groq Integration — `server/src/services/groqService.js` (`generateCoreCompetencies` — OpenAI-compatible client pointed at Groq base URL, lazy-initialized so server starts cleanly without key set, fixed SQL Server prompt verbatim, strips leading `*`/`-`/`•` chars, drops empty lines, returns string array). `openai` package installed. `GROQ_API_KEY` added to `.env.example`. Live test confirmed: clean bullet array returned, no markdown chars, invalid key surfaces clear 401 error.
 - Feature 10: Generate Endpoint — `server/src/services/generateService.js` (5-step orchestration: B2 GetObject download → Groq bullets → Python `/generate-section` → Python `/convert-to-pdf` → stream PDF back; `Promise.race` 30s timeout returns 504; each step throws a distinct named error), `generateController.js` (validates all 5 required fields, streams PDF with `Content-Type: application/pdf` + `Content-Disposition` from Python service), `generateRoutes.js` (`POST /api/generate`, auth-gated), mounted in `app.js`. `DOCX_SERVICE_URL` added to `.env.example`.
 - Feature 11: Settings Endpoints — `authService.updateName` + `changePassword` (current-password check, strength policy, same-password rejection via shared `rejectSamePassword` helper reused by `resetPassword`). Controllers `updateName` + `changePassword` (success-only). Routes `PATCH /api/auth/me` + `PATCH /api/auth/password`, both behind `authMiddleware`. E2e verified: name update + empty-name 400, password change + wrong-current/same/weak rejections, `email` field ignored, 401 without cookie, `{ success: false, error }` shape, clean start. Final backend feature.
+- Feature 12: Design System — Vite port 3000 + `@` alias (`vite.config.js`), `jsconfig.json`, Urbanist font (400-700) in `index.html`, shadcn deps (cva/clsx/tailwind-merge/tw-animate-css), `components.json`, `cn` helper (`src/lib/utils.js`). `index.css`: all ui-context tokens as CSS vars, `@theme inline` maps to `bg-surface`/`text-primary`/`border-default`/`state-*` utilities, radii 6/8/12px (`rounded-sm/md/lg`), `--font-sans: Urbanist`. Shell: `store/index.js`, Redux Provider in `main.jsx`, routes /login, /signup, /dashboard (placeholder pages). Build + lint pass, dev server on :3000.
 
 ## In Progress
 
-- None.
+- (none)
 
 ## Next Up
 
-- Feature 12+ (frontend features; spec not yet written)
+- Feature 13+ (auth pages; spec not yet written)
 
 ## Open Questions
 
@@ -59,3 +60,4 @@ Update this file after every meaningful implementation change.
 - Feature 09 (complete): `server/src/services/groqService.js` created — `openai` npm package used as OpenAI-compatible client pointed at `https://api.groq.com/openai/v1`. Client is lazy-initialized (not at module load) so server starts cleanly without `GROQ_API_KEY` set. Fixed SQL Server DBA prompt used verbatim. `generateCoreCompetencies` substitutes `{JD_TEXT}`, calls `llama-3.3-70b-versatile` via chat completions, post-processes response (strips leading `*`/`-`/`•`, trims whitespace, drops empty lines), returns string array. Invalid key surfaces as `"Groq API request failed: 401 Invalid API Key"` with `status: 502`. `GROQ_API_KEY` added to `.env.example`. Live test confirmed: 7 clean SQL Server bullets returned, no markdown chars, no empty lines, invalid key error clear and specific.
 - Feature 10 (complete): `server/src/services/generateService.js` — 5-step chain (B2 GetObject → Groq → Python `/generate-section` → Python `/convert-to-pdf` → return PDF bytes + `Content-Disposition`), each step throws a distinct named error, full chain wrapped in `Promise.race` with 30s/504 timeout. `generateController.js` validates all 5 required body fields, streams PDF back. `generateRoutes.js` mounts `POST /api/generate` behind `authMiddleware`. Wired in `app.js`. `DOCX_SERVICE_URL` added to `.env.example`.
 - Feature 11 (complete): `rejectSamePassword` extracted as the shared same-password guard and reused by `resetPassword`. Both settings routes behind `authMiddleware` (unlike the unauthenticated forgot/reset flow). No rate limiters per spec — endpoints require an authenticated session (scoping note). E2E verified against live Atlas; test user cleaned up.
+- Feature 12 (complete): shadcn/ui manually scaffolded (no CLI) — `shadcn@2.10.0 init` fails `css: Invalid input`; live registry serves v4 nested CSS the classic CLI rejects and pulls `radix-ui`/`tw-animate-css` instead of the spec's CVA deps. Used Tailwind v4 CSS-first `@theme inline` tokens instead of spec's v3 `tailwind.config.js`; `rounded-sm/md/lg` remapped to 6/8/12px (spec radii, overriding Tailwind defaults). `rounded-sm/md` not yet in prod CSS since no component uses them (Tailwind emits used utilities only); values verified via `@theme inline`. Shell is placeholder pending Feature 13.
