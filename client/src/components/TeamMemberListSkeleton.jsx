@@ -1,7 +1,8 @@
 import { Skeleton } from '@/components/ui/skeleton'
+import { cn } from '@/lib/utils'
 
-const TeamMemberListSkeleton = ({ rows = 5 }) => (
-  <div aria-hidden="true" className="space-y-1 p-3">
+const TeamMemberListSkeleton = ({ rows = 5, className }) => (
+  <div aria-hidden="true" className={cn('space-y-1 p-3', className)}>
     {Array.from({ length: rows }, (_, i) => (
       <div key={i} className="flex items-center gap-3 px-2 py-2">
         <Skeleton className="size-8 shrink-0 rounded-md" />

@@ -6,9 +6,10 @@ import { cn } from '@/lib/utils'
  * @param {import('lucide-react').LucideIcon} [props.icon]
  * @param {string} props.title
  * @param {string} [props.subtitle]
+ * @param {import('react').ReactNode} [props.action]
  * @param {string} [props.className]
  */
-const EmptyState = ({ icon: Icon, title, subtitle, className }) => (
+const EmptyState = ({ icon: Icon, title, subtitle, action, className }) => (
   <div className={cn('flex flex-col items-center justify-center gap-3 px-6 text-center', className)}>
     {Icon && (
       <motion.div
@@ -21,6 +22,7 @@ const EmptyState = ({ icon: Icon, title, subtitle, className }) => (
     )}
     <h2 className="text-sm font-semibold text-primary">{title}</h2>
     {subtitle ? <p className="max-w-xs text-sm text-muted">{subtitle}</p> : null}
+    {action ? <div className="mt-1 w-full">{action}</div> : null}
   </div>
 )
 

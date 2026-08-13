@@ -4,7 +4,8 @@ import { Mail } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import useAutoDismiss from '@/hooks/useAutoDismiss'
 import PasswordInput from '@/components/PasswordInput'
-import { AuthCard, BlockError, FieldError, Spinner, inputClass, primaryBtn } from '@/components/authUi'
+import { AuthCard, BlockError, FieldError, Spinner } from '@/components/authUi'
+import { inputClass, primaryBtn } from '@/lib/authUiHelpers'
 
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 

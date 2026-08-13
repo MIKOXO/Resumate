@@ -5,7 +5,8 @@ import { useAuth } from '@/hooks/useAuth'
 import useAutoDismiss from '@/hooks/useAutoDismiss'
 import PasswordInput from '@/components/PasswordInput'
 import PasswordStrengthBar from '@/components/PasswordStrengthBar'
-import { AuthCard, BlockError, FieldError, Spinner, inputClass, primaryBtn } from '@/components/authUi'
+import { AuthCard, BlockError, FieldError, Spinner } from '@/components/authUi'
+import { inputClass, primaryBtn } from '@/lib/authUiHelpers'
 import { getPasswordStrength } from '@/lib/passwordStrength'
 
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/

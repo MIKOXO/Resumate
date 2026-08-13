@@ -51,17 +51,3 @@ export const FieldError = ({ message, show = true }) =>
 export const Spinner = () => (
   <Loader2 className="h-4 w-4 animate-spin" />
 )
-
-export const inputClass = (hasError) =>
-  cn(
-    'w-full rounded-md border bg-elevated px-3 py-2 pr-9 text-sm text-primary placeholder:text-disabled outline-none transition-colors',
-    hasError ? 'border-state-error' : 'border-strong focus:border-accent-primary',
-  )
-
-export const primaryBtn = (disabled) =>
-  cn(
-    'flex w-full items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition-colors',
-    disabled
-      ? 'cursor-not-allowed bg-disabled text-primary'
-      : 'bg-accent-primary text-base hover:bg-accent-hover',
-  )
