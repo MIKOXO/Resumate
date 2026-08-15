@@ -1,10 +1,12 @@
 import { useEffect } from 'react'
 import { useDispatch } from 'react-redux'
+import { useSelector } from 'react-redux'
 import { motion } from 'framer-motion'
 import { FileText } from 'lucide-react'
 import TopBar from '@/components/TopBar'
 import EmptyState from '@/components/EmptyState'
 import TeamMemberTree from '@/components/TeamMemberTree'
+import GenerateWorkspace from '@/components/GenerateWorkspace'
 import { fetchTeamMembers } from '@/store/slices/teamMembersSlice'
 
 const SHELL_ANIM = {
@@ -15,6 +17,7 @@ const SHELL_ANIM = {
 
 const Dashboard = () => {
   const dispatch = useDispatch()
+  const selectedProspectId = useSelector((s) => s.teamMembers.selectedProspectId)
 
   useEffect(() => {
     dispatch(fetchTeamMembers())
@@ -28,7 +31,9 @@ const Dashboard = () => {
           <TeamMemberTree />
         </aside>
         <main className="hidden min-w-0 flex-1 flex-col overflow-y-auto bg-base md:flex">
-          <EmptyState className="w-full flex-1" icon={FileText} title="Select a prospect to get started" />
+          {selectedProspectId
+            ? <GenerateWorkspace />
+            : <EmptyState className="w-full flex-1" icon={FileText} title="Select a prospect to get started" />}
         </main>
       </div>
     </motion.div>

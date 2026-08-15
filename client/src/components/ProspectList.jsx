@@ -41,7 +41,7 @@ const ProspectList = ({ member }) => {
         >
           <button
             type="button"
-            onClick={() => selectProspect(p._id)}
+            onClick={() => selectProspect(p._id, member._id)}
             className="min-w-0 flex-1 cursor-pointer truncate text-left text-sm text-primary"
             title={p.name}
           >

@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import teamMemberService from '@/services/teamMemberService'
 import prospectService from '@/services/prospectService'
+import { logout } from '@/store/slices/authSlice'
 
 const withProspectState = (teamMember) => ({
   ...teamMember,
@@ -89,6 +90,7 @@ const teamMembersSlice = createSlice({
   initialState: {
     list: [],
     selectedProspectId: null,
+    selectedTeamMemberId: null,
     loading: false,
     error: null,
   },
@@ -98,7 +100,8 @@ const teamMembersSlice = createSlice({
       if (member) member.expanded = !member.expanded
     },
     selectProspect: (state, action) => {
-      state.selectedProspectId = action.payload
+      state.selectedProspectId = action.payload.prospectId
+      state.selectedTeamMemberId = action.payload.teamMemberId
     },
     clearError: (state) => {
       state.error = null
@@ -130,6 +133,7 @@ const teamMembersSlice = createSlice({
         const member = findMember(state, action.payload)
         if (member?.prospects?.some((p) => p._id === state.selectedProspectId)) {
           state.selectedProspectId = null
+          state.selectedTeamMemberId = null
         }
         state.list = state.list.filter((tm) => tm._id !== action.payload)
       })
@@ -181,9 +185,17 @@ const teamMembersSlice = createSlice({
         }
         if (state.selectedProspectId === action.payload.prospectId) {
           state.selectedProspectId = null
+          state.selectedTeamMemberId = null
         }
       })
       .addCase(deleteProspect.rejected, (state, action) => { state.error = action.payload })
+
+      .addCase(logout.fulfilled, (state) => {
+        state.list = []
+        state.selectedProspectId = null
+        state.selectedTeamMemberId = null
+        state.error = null
+      })
   },
 })
 

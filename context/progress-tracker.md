@@ -27,6 +27,7 @@ Update this file after every meaningful implementation change.
 - Feature 13: Auth pages — authService/slice/hook, password strength, PasswordInput, PasswordStrengthBar, OTPInput, 4 pages, route guards.
 - Feature 14: Dashboard shell — radix-ui added, shadcn dropdown/avatar/skeleton scaffolds, EmptyState, UserMenu, TopBar, rebuilt Dashboard.
 - Feature 15: Team & Prospect Tree — services, teamMembersSlice (+prospect state, toggleExpand, selectedProspectId), dialogs, ProspectList/TeamMemberRow/TeamMemberTree, Dashboard wiring.
+- Feature 16: Generate Workspace — Popover/Calendar shadcn scaffolds, react-day-picker v10, DatePicker, generateService, generationSlice, useGeneration, GenerateWorkspace, ResultCard, Dashboard wired. `selectProspect` now carries `teamMemberId`. Build + lint clean.
 
 ## In Progress
 
@@ -34,7 +35,7 @@ Update this file after every meaningful implementation change.
 
 ## Next Up
 
-- Feature 16 (right panel workspace) — verify `selectedProspectId` wiring (already in Redux)
+- (none — all planned features complete)
 
 ## Open Questions
 
@@ -54,4 +55,4 @@ Update this file after every meaningful implementation change.
 - Feature 05/06: cascade delete via shared `getOwnedTeamMember` + dynamic `import()` (ESM circular import). B2 DeleteObject idempotent. Test data cleaned up.
 - Feature 14: radix-ui needed for faithful shadcn (approved). `Logo` reused as-is (links to /login, bounces back via guard) — fix when touched. Left panel hidden below `md`.
 - Feature 15: dialogs use tw-animate-css (Radix doesn't animate internally); delete confirm fetches prospects for accurate count; replace has no confirm; `primaryBtn`/helpers moved to `lib/authUiHelpers.js` (clears old lint errors). Client lints clean.
-- Feature 12: shadcn manually scaffolded (CLI fails on v4 nested CSS); Tailwind v4 `@theme inline` tokens instead of v3 config; radii remapped to 6/8/12px.
+- Feature 16: react-day-picker v10 installed; Popover/Calendar manually scaffolded; `selectProspect` payload changed to `{ prospectId, teamMemberId }` — one call site updated in ProspectList. Error banner in GenerateWorkspace is inline (no auto-dismiss) — intentional, unlike auth forms.
