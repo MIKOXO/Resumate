@@ -72,6 +72,23 @@ export const resetPassword = createAsyncThunk('auth/resetPassword', async ({ cod
   }
 })
 
+export const updateName = createAsyncThunk('auth/updateName', async ({ name }, { rejectWithValue }) => {
+  try {
+    const res = await authService.updateName(name)
+    return res.data.data
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.error || 'Update failed')
+  }
+})
+
+export const changePassword = createAsyncThunk('auth/changePassword', async ({ currentPassword, newPassword }, { rejectWithValue }) => {
+  try {
+    await authService.changePassword(currentPassword, newPassword)
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.error || 'Password change failed')
+  }
+})
+
 const authSlice = createSlice({
   name: 'auth',
   initialState: {
@@ -79,11 +96,17 @@ const authSlice = createSlice({
     user: null,
     loading: false,
     error: null,
+    nameLoading: false,
+    nameError: null,
+    passwordLoading: false,
+    passwordError: null,
     authReady: false,
     resetFlow: { step: 'request', email: '' },
   },
   reducers: {
     clearError: (state) => { state.error = null },
+    clearNameError: (state) => { state.nameError = null },
+    clearPasswordError: (state) => { state.passwordError = null },
     setResetStep: (state, action) => { state.resetFlow.step = action.payload },
     resetResetFlow: (state) => { state.resetFlow = { step: 'request', email: '' } },
   },
@@ -150,8 +173,33 @@ const authSlice = createSlice({
         state.resetFlow = { step: 'request', email: '' }
       })
       .addCase(resetPassword.rejected, rejected)
+
+      .addCase(updateName.pending, (state) => {
+        state.nameLoading = true
+        state.nameError = null
+      })
+      .addCase(updateName.fulfilled, (state, action) => {
+        state.nameLoading = false
+        state.user = action.payload
+      })
+      .addCase(updateName.rejected, (state, action) => {
+        state.nameLoading = false
+        state.nameError = action.payload
+      })
+
+      .addCase(changePassword.pending, (state) => {
+        state.passwordLoading = true
+        state.passwordError = null
+      })
+      .addCase(changePassword.fulfilled, (state) => {
+        state.passwordLoading = false
+      })
+      .addCase(changePassword.rejected, (state, action) => {
+        state.passwordLoading = false
+        state.passwordError = action.payload
+      })
   },
 })
 
-export const { clearError, setResetStep, resetResetFlow } = authSlice.actions
+export const { clearError, clearNameError, clearPasswordError, setResetStep, resetResetFlow } = authSlice.actions
 export default authSlice.reducer

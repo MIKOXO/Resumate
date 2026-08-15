@@ -14,6 +14,8 @@ const authService = {
   resendCode: () => api.post('/resend-code'),
   forgotPassword: (email) => api.post('/forgot-password', { email }),
   resetPassword: (code, newPassword) => api.post('/reset-password', { code, newPassword }),
+  updateName: (name) => api.patch('/me', { name }),
+  changePassword: (currentPassword, newPassword) => api.patch('/password', { currentPassword, newPassword }),
 }
 
 export default authService

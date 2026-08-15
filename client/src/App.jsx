@@ -8,6 +8,7 @@ import Signup from './pages/Signup.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import VerifyEmail from './pages/VerifyEmail.jsx'
 import ForgotPassword from './pages/ForgotPassword.jsx'
+import Settings from './pages/Settings.jsx'
 
 const AuthGate = ({ children, requireAuth }) => {
   const { isAuthenticated, authReady } = useSelector((s) => s.auth)
@@ -39,6 +40,7 @@ const AppRoutes = () => {
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/dashboard" element={<AuthGate requireAuth><Dashboard /></AuthGate>} />
+        <Route path="/settings" element={<AuthGate requireAuth><Settings /></AuthGate>} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </AnimatePresence>
