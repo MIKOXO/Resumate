@@ -135,7 +135,7 @@ const ForgotPassword = () => {
     e.preventDefault()
     if (!resetValid || loading) return
     clearError()
-    const result = await resetPassword(otpCode, newPassword)
+    const result = await resetPassword(otpCode, newPassword, confirm)
     if (result.meta?.requestStatus === 'fulfilled') {
       navigate('/dashboard', { replace: true })
     }

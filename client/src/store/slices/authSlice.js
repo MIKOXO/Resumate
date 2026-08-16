@@ -38,9 +38,9 @@ export const verifyEmail = createAsyncThunk('auth/verifyEmail', async ({ code },
   }
 })
 
-export const resendVerificationCode = createAsyncThunk('auth/resendVerificationCode', async (_, { rejectWithValue }) => {
+export const resendVerificationCode = createAsyncThunk('auth/resendVerificationCode', async ({ email }, { rejectWithValue }) => {
   try {
-    await authService.resendCode()
+    await authService.resendCode(email)
   } catch (err) {
     return rejectWithValue(err.response?.data?.error || 'Resend failed')
   }
@@ -63,9 +63,9 @@ export const requestPasswordReset = createAsyncThunk('auth/requestPasswordReset'
   }
 })
 
-export const resetPassword = createAsyncThunk('auth/resetPassword', async ({ code, newPassword }, { rejectWithValue }) => {
+export const resetPassword = createAsyncThunk('auth/resetPassword', async ({ code, newPassword, confirmPassword }, { rejectWithValue }) => {
   try {
-    const res = await authService.resetPassword(code, newPassword)
+    const res = await authService.resetPassword(code, newPassword, confirmPassword)
     return res.data.data
   } catch (err) {
     return rejectWithValue(err.response?.data?.error || 'Reset failed')

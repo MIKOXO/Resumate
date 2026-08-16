@@ -24,7 +24,7 @@ const VerifyEmail = () => {
 
   const handleResend = () => {
     clearError()
-    resendVerificationCode()
+    resendVerificationCode(user?.email)
   }
 
   return (
