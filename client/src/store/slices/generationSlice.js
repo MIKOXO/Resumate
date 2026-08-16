@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import generateService from '@/services/generateService'
+import { logout } from '@/store/slices/authSlice'
 
 export const generateResume = createAsyncThunk(
   'generation/generate',
@@ -9,7 +10,7 @@ export const generateResume = createAsyncThunk(
       const disposition = res.headers['content-disposition'] || ''
       const match = disposition.match(/filename="([^"]+)"/)
       const filename = match ? match[1] : 'resume.pdf'
-      return { blob: res.data, filename }
+      return { prospectId: params.prospectId, blob: res.data, filename }
     } catch (err) {
       // With responseType:'blob', error body is also a blob — parse it for the message
       if (err.response?.data instanceof Blob) {
@@ -31,36 +32,46 @@ const generationSlice = createSlice({
   initialState: {
     status: 'idle', // 'idle' | 'generating' | 'success' | 'error'
     error: null,
-    resultBlob: null,
-    resultFilename: null,
+    operatingProspectId: null,
+    results: {}, // prospectId -> { blob, filename }
   },
   reducers: {
-    resetGeneration: (state) => {
-      state.status = 'idle'
-      state.error = null
-      state.resultBlob = null
-      state.resultFilename = null
+    clearProspectResult: (state, action) => {
+      delete state.results[action.payload]
+      if (state.operatingProspectId === action.payload) {
+        state.status = 'idle'
+        state.error = null
+      }
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(generateResume.pending, (state) => {
+      .addCase(generateResume.pending, (state, action) => {
         state.status = 'generating'
         state.error = null
-        state.resultBlob = null
-        state.resultFilename = null
+        state.operatingProspectId = action.meta.arg.prospectId
       })
       .addCase(generateResume.fulfilled, (state, action) => {
-        state.status = 'success'
-        state.resultBlob = action.payload.blob
-        state.resultFilename = action.payload.filename
+        const { prospectId, blob, filename } = action.payload
+        state.results[prospectId] = { blob, filename }
+        if (state.operatingProspectId === prospectId) {
+          state.status = 'success'
+        }
       })
       .addCase(generateResume.rejected, (state, action) => {
-        state.status = 'error'
-        state.error = action.payload
+        if (state.operatingProspectId === action.meta.arg.prospectId) {
+          state.status = 'error'
+          state.error = action.payload
+        }
+      })
+      .addCase(logout.fulfilled, (state) => {
+        state.status = 'idle'
+        state.error = null
+        state.operatingProspectId = null
+        state.results = {}
       })
   },
 })
 
-export const { resetGeneration } = generationSlice.actions
+export const { clearProspectResult } = generationSlice.actions
 export default generationSlice.reducer

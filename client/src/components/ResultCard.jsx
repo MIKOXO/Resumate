@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Download } from 'lucide-react'
+import { Download, X } from 'lucide-react'
 import { primaryBtn } from '@/lib/authUiHelpers'
 import { cn } from '@/lib/utils'
 
@@ -10,9 +10,9 @@ const CARD_ANIM = {
 }
 
 /**
- * @param {{ filename: string, blob: Blob }} props
+ * @param {{ filename: string, blob: Blob, onClear?: () => void }} props
  */
-const ResultCard = ({ filename, blob }) => {
+const ResultCard = ({ filename, blob, onClear }) => {
   const handleDownload = () => {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -28,14 +28,26 @@ const ResultCard = ({ filename, blob }) => {
       className="rounded-lg border border-default bg-surface p-4 flex items-center justify-between gap-4"
     >
       <span className="truncate text-sm text-primary" title={filename}>{filename}</span>
-      <button
-        type="button"
-        onClick={handleDownload}
-        className={cn(primaryBtn(false), 'w-auto shrink-0 px-4 cursor-pointer')}
-      >
-        <Download className="h-4 w-4" />
-        Download
-      </button>
+      <div className="flex shrink-0 items-center gap-2">
+        <button
+          type="button"
+          onClick={handleDownload}
+          className={cn(primaryBtn(false), 'w-auto px-4 cursor-pointer')}
+        >
+          <Download className="h-4 w-4" />
+          Download
+        </button>
+        {onClear && (
+          <button
+            type="button"
+            onClick={onClear}
+            aria-label="Dismiss download"
+            className="cursor-pointer rounded-md p-1.5 text-muted transition-colors outline-none hover:bg-elevated hover:text-primary focus-visible:ring-2 focus-visible:ring-accent-primary/40"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
     </motion.div>
   )
 }
