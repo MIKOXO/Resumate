@@ -52,9 +52,10 @@ Update this file after every meaningful implementation change.
 
 ## Session Notes
 
-- Feature 03: EMAIL_\* vars set — signup emails verified end-to-end. Test users cleaned up.
+- Feature 03: EMAIL\_\* vars set — signup emails verified end-to-end. Test users cleaned up.
 - Feature 05/06: cascade delete via shared `getOwnedTeamMember` + dynamic `import()` (ESM circular import). B2 DeleteObject idempotent. Test data cleaned up.
 - Feature 14: radix-ui needed for faithful shadcn (approved). `Logo` reused as-is (links to /login, bounces back via guard) — fix when touched. Left panel hidden below `md`.
 - Feature 15: dialogs use tw-animate-css (Radix doesn't animate internally); delete confirm fetches prospects for accurate count; replace has no confirm; `primaryBtn`/helpers moved to `lib/authUiHelpers.js` (clears old lint errors). Client lints clean.
 - Feature 16: react-day-picker v10 installed; Popover/Calendar manually scaffolded; `selectProspect` payload changed to `{ prospectId, teamMemberId }` — one call site updated in ProspectList. Error banner in GenerateWorkspace is inline (no auto-dismiss) — intentional, unlike auth forms.
 - Feature 17 post-build: Settings page restructured from two stacked cards into a single card with a segmented Profile/Security tab switcher (motion sliding pill via `layoutId`). Both forms stay mounted so their state survives tab switches. UI-only change; no spec files touched.
+- Feature 17 post-build (2): removed prospect-count badge from team member rows; replaced team member delete icon and prospect replace/delete icons with the navbar's DropdownMenu pattern — a single 3-dot (MoreVertical) menu per row (`Delete` destructive on team members; `Replace resume` + `Delete` on prospects). Existing dialog logic untouched.

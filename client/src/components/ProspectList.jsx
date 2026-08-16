@@ -1,18 +1,16 @@
 import { useState } from 'react'
-import { RefreshCw, Trash2 } from 'lucide-react'
+import { MoreHorizontal, RefreshCw, Trash2 } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { useTeamMembers } from '@/hooks/useTeamMembers'
 import TeamMemberListSkeleton from '@/components/TeamMemberListSkeleton'
 import ReplaceResumeDialog from '@/components/ReplaceResumeDialog'
 import DeleteConfirmDialog from '@/components/DeleteConfirmDialog'
 import { cn } from '@/lib/utils'
-
-const formatUpdatedAt = (iso) => {
-  if (!iso) return ''
-  const date = new Date(iso)
-  const options = { month: 'short', day: 'numeric' }
-  if (date.getFullYear() !== new Date().getFullYear()) options.year = 'numeric'
-  return date.toLocaleDateString(undefined, options)
-}
 
 const ProspectList = ({ member }) => {
   const { selectedProspectId, selectProspect, deleteProspect } = useTeamMembers()
@@ -47,23 +45,27 @@ const ProspectList = ({ member }) => {
           >
             {p.name}
           </button>
-          <span className="shrink-0 text-xs text-muted">{formatUpdatedAt(p.uploadedAt)}</span>
-          <button
-            type="button"
-            aria-label={`Replace resume for ${p.name}`}
-            onClick={() => setReplaceFor(p)}
-            className="cursor-pointer rounded-md p-1 text-muted transition-colors hover:text-primary"
-          >
-            <RefreshCw className="size-4" />
-          </button>
-          <button
-            type="button"
-            aria-label={`Delete ${p.name}`}
-            onClick={() => setDeleteFor(p)}
-            className="cursor-pointer rounded-md p-1 text-muted transition-colors hover:text-state-error"
-          >
-            <Trash2 className="size-4" />
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                aria-label={`Actions for ${p.name}`}
+                className="cursor-pointer rounded-md p-1 text-muted transition-colors outline-none hover:bg-surface hover:text-primary focus-visible:ring-2 focus-visible:ring-accent-primary/40"
+              >
+                <MoreHorizontal className="size-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => setReplaceFor(p)}>
+                <RefreshCw />
+                Replace resume
+              </DropdownMenuItem>
+              <DropdownMenuItem variant="destructive" onSelect={() => setDeleteFor(p)}>
+                <Trash2 />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       ))}
 

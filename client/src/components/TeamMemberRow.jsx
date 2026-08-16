@@ -1,6 +1,12 @@
 import { useState } from 'react'
-import { ChevronRight, Plus, Trash2 } from 'lucide-react'
+import { ChevronRight, MoreHorizontal, Plus, Trash2 } from 'lucide-react'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { useTeamMembers } from '@/hooks/useTeamMembers'
 import ProspectList from '@/components/ProspectList'
 import AddProspectDialog from '@/components/AddProspectDialog'
@@ -45,21 +51,25 @@ const TeamMemberRow = ({ member }) => {
               )}
             />
             <span className="truncate text-sm text-primary">{member.name}</span>
-            {member.prospectsLoaded && (
-              <span className="ml-auto rounded-sm border border-default px-1.5 py-px text-xs tabular-nums text-muted">
-                {count}
-              </span>
-            )}
           </button>
         </CollapsibleTrigger>
-        <button
-          type="button"
-          aria-label={`Delete ${member.name}`}
-          onClick={handleDeleteClick}
-          className="cursor-pointer rounded-md p-1.5 text-muted transition-colors hover:text-state-error"
-        >
-          <Trash2 className="size-4" />
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              aria-label={`Actions for ${member.name}`}
+              className="cursor-pointer rounded-md p-1.5 text-muted transition-colors outline-none hover:bg-surface hover:text-primary focus-visible:ring-2 focus-visible:ring-accent-primary/40"
+            >
+              <MoreHorizontal className="size-4" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem variant="destructive" onSelect={handleDeleteClick}>
+              <Trash2 />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <CollapsibleContent>
