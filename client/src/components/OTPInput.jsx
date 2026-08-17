@@ -87,7 +87,7 @@ const OTPInput = ({ onComplete, onResend, resendLoading }) => {
           type="button"
           onClick={handleResend}
           disabled={cooldown > 0 || resendLoading}
-          className="text-sm text-accent-primary underline disabled:cursor-not-allowed disabled:text-disabled"
+          className="cursor-pointer text-sm text-accent-primary underline disabled:cursor-not-allowed disabled:text-disabled"
         >
           {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend code'}
         </button>
@@ -123,7 +123,7 @@ const OTPInput = ({ onComplete, onResend, resendLoading }) => {
           type="button"
           onClick={handleResend}
           disabled={cooldown > 0 || resendLoading}
-          className="text-xs text-accent-primary underline disabled:cursor-not-allowed disabled:text-disabled"
+          className="cursor-pointer text-xs text-accent-primary underline disabled:cursor-not-allowed disabled:text-disabled"
         >
           {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend code'}
         </button>

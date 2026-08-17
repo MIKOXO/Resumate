@@ -34,7 +34,7 @@ const UserMenu = () => {
         <button
           type="button"
           aria-label="Open user menu"
-          className="rounded-full outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-accent-primary/40"
+          className="cursor-pointer rounded-full outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-accent-primary/40"
         >
           <Avatar>
             <AvatarFallback>{initialsOf(user?.name)}</AvatarFallback>

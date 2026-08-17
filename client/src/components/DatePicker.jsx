@@ -38,7 +38,7 @@ const DatePicker = ({ value, onChange, disabled }) => {
           type="button"
           disabled={disabled}
           className={cn(
-            'flex w-full items-center gap-2 rounded-md border bg-elevated px-3 py-2 text-sm transition-colors',
+            'flex w-full cursor-pointer items-center gap-2 rounded-md border bg-elevated px-3 py-2 text-sm transition-colors',
             'border-strong focus:border-accent-primary focus:outline-none',
             value ? 'text-primary' : 'text-disabled',
             disabled && 'cursor-not-allowed opacity-50',

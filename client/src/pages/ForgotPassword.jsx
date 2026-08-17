@@ -118,7 +118,7 @@ const ForgotPassword = () => {
             <button
               type="button"
               onClick={() => { clearError(); resetResetFlow() }}
-              className="text-accent-primary hover:underline"
+              className="cursor-pointer text-accent-primary hover:underline"
             >
               Start over
             </button>

@@ -76,7 +76,7 @@ const ReplaceResumeDialog = ({ open, onOpenChange, teamMemberId, prospect }) => 
             <DialogClose asChild>
               <button type="button" className={cn(outlineBtn(), 'cursor-pointer')}>Cancel</button>
             </DialogClose>
-            <button type="submit" disabled={!valid || submitting} className={cn(primaryBtn(!valid || submitting), 'sm:w-auto', 'cursor-pointer', 'px-5', 'text-sm')}>
+            <button type="submit" disabled={!valid || submitting} className={cn(primaryBtn(!valid || submitting), 'sm:w-auto', 'px-5', 'text-sm')}>
               {submitting ? <Spinner /> : 'Replace'}
             </button>
           </DialogFooter>

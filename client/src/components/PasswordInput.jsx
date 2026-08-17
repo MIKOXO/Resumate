@@ -31,7 +31,7 @@ const PasswordInput = ({ value, onChange, placeholder = 'Password', className, h
       <button
         type="button"
         onClick={() => setVisible((v) => !v)}
-        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-primary"
+        className="cursor-pointer absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-primary"
         tabIndex={-1}
         aria-label={visible ? 'Hide password' : 'Show password'}
       >

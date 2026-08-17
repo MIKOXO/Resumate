@@ -283,7 +283,7 @@ const Settings = () => {
                   aria-controls={`settings-panel-${id}`}
                   onClick={() => setTab(id)}
                   className={cn(
-                    'relative rounded-sm py-1.5 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/40',
+                    'relative cursor-pointer rounded-sm py-1.5 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/40',
                     active ? 'text-primary' : 'text-muted hover:text-primary',
                   )}
                 >
