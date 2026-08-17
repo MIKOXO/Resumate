@@ -2,6 +2,8 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 import User from '../models/User.js';
+import Prospect from '../models/Prospect.js';
+import TeamMember from '../models/TeamMember.js';
 import { sendEmail } from './emailService.js';
 
 const SAFE_FIELDS = '_id name email emailVerified createdAt';
@@ -369,4 +371,36 @@ export const changePassword = async ({ userId, currentPassword, newPassword }) =
   await user.save();
 
   return toSafeUser(user);
+};
+
+/**
+ * @param {{ userId: string, password: string }} params
+ * @returns {Promise<void>}
+ */
+export const deleteAccount = async ({ userId, password }) => {
+  const user = await User.findById(userId).select('+password');
+  if (!user) {
+    const err = new Error('User not found.');
+    err.status = 404;
+    throw err;
+  }
+
+  const match = await bcrypt.compare(password, user.password);
+  if (!match) {
+    const err = new Error('Current password is incorrect.');
+    err.status = 400;
+    throw err;
+  }
+
+  const { deleteAllProspectsForTeamMember } = await import('./prospectService.js');
+
+  const teamMembers = await TeamMember.find({ ownerId: userId });
+  await Promise.all(
+    teamMembers.map(async (tm) => {
+      await deleteAllProspectsForTeamMember({ ownerId: userId, teamMemberId: tm._id });
+      await TeamMember.deleteOne({ _id: tm._id });
+    })
+  );
+
+  await User.deleteOne({ _id: userId });
 };

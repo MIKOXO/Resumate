@@ -187,3 +187,19 @@ export const changePassword = async (req, res, next) => {
     next(err);
   }
 };
+
+export const deleteAccount = async (req, res, next) => {
+  try {
+    const { password } = req.body;
+
+    if (!password || typeof password !== 'string') {
+      return res.status(400).json({ success: false, error: 'Current password is required.' });
+    }
+
+    await authService.deleteAccount({ userId: req.user, password });
+    res.clearCookie(COOKIE_NAME, cookieOptions());
+    res.json({ success: true, data: null });
+  } catch (err) {
+    next(err);
+  }
+};

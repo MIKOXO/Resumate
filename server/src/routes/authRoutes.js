@@ -15,6 +15,7 @@ router.post('/reset-password', authLimiter, authController.resetPassword);
 router.get('/me', authMiddleware, authController.me);
 router.patch('/me', authMiddleware, authController.updateName);
 router.patch('/password', authMiddleware, authController.changePassword);
+router.delete('/me', authMiddleware, authLimiter, authController.deleteAccount);
 router.post('/logout', authController.logout);
 
 export default router;
