@@ -8,8 +8,9 @@ import useAutoDismiss from '@/hooks/useAutoDismiss'
 import PasswordInput from '@/components/PasswordInput'
 import PasswordStrengthBar from '@/components/PasswordStrengthBar'
 import { BlockError, FieldError, Spinner } from '@/components/authUi'
-import { inputClass, primaryBtn } from '@/lib/authUiHelpers'
+import { inputClass, primaryBtn, destructiveBtn } from '@/lib/authUiHelpers'
 import { getPasswordStrength } from '@/lib/passwordStrength'
+import DeleteConfirmDialog from '@/components/DeleteConfirmDialog'
 import Logo from '@/components/Logo'
 
 const CARD_ANIM = {
@@ -21,6 +22,7 @@ const CARD_ANIM = {
 const TABS = [
   { id: 'profile', label: 'Profile' },
   { id: 'security', label: 'Security' },
+  { id: 'danger', label: 'Danger Zone' },
 ]
 
 const ProfileForm = () => {
@@ -189,6 +191,64 @@ const SecurityForm = () => {
   )
 }
 
+const DangerZoneForm = () => {
+  const { deleteAccount, deleteLoading, deleteError, clearDeleteError } = useAuth()
+
+  const [password, setPassword] = useState('')
+  const [passwordTouched, setPasswordTouched] = useState(false)
+  const [passwordFocused, setPasswordFocused] = useState(false)
+  const [dialogOpen, setDialogOpen] = useState(false)
+
+  const passwordRequiredErr = passwordTouched && !password ? 'Current password is required.' : ''
+  const passwordRequiredVisible = useAutoDismiss(passwordRequiredErr, passwordFocused)
+  const passwordValid = password.length > 0
+
+  const handleDelete = async () => {
+    const result = await deleteAccount(password)
+    if (result.meta?.requestStatus === 'fulfilled') {
+      setDialogOpen(false)
+    }
+  }
+
+  return (
+    <>
+      <BlockError message={deleteError} onDismiss={clearDeleteError} />
+      <div className="space-y-3">
+        <div>
+          <label className="mb-1 block text-xs text-muted">Current password</label>
+          <PasswordInput
+            value={password}
+            onChange={(v) => { setPassword(v); clearDeleteError() }}
+            onFocus={() => setPasswordFocused(true)}
+            onBlur={() => { setPasswordFocused(false); setPasswordTouched(true) }}
+            placeholder="Current password"
+            hasError={passwordRequiredVisible}
+          />
+          <FieldError message={passwordRequiredErr} show={passwordRequiredVisible} />
+        </div>
+
+        <button
+          type="button"
+          disabled={!passwordValid || deleteLoading}
+          className={destructiveBtn(!passwordValid || deleteLoading)}
+          onClick={() => setDialogOpen(true)}
+        >
+          {deleteLoading ? <Spinner /> : 'Delete account'}
+        </button>
+      </div>
+
+      <DeleteConfirmDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        title="Delete account"
+        description="This will permanently delete your account, all team members, and all prospect resumes. This action cannot be undone."
+        confirmLabel="Delete account"
+        onConfirm={handleDelete}
+      />
+    </>
+  )
+}
+
 const Settings = () => {
   const [tab, setTab] = useState('profile')
 
@@ -210,7 +270,7 @@ const Settings = () => {
           <h1 className="mb-1 text-lg font-semibold text-primary">Settings</h1>
           <p className="mb-5 text-sm text-muted">Manage your account.</p>
 
-          <div role="tablist" aria-label="Settings sections" className="mb-5 grid grid-cols-2 gap-1 rounded-md border border-default bg-base p-1">
+          <div role="tablist" aria-label="Settings sections" className="mb-5 grid grid-cols-3 gap-1 rounded-md border border-default bg-base p-1">
             {TABS.map(({ id, label }) => {
               const active = tab === id
               return (
@@ -255,6 +315,14 @@ const Settings = () => {
             className={tab === 'security' ? '' : 'hidden'}
           >
             <SecurityForm />
+          </div>
+          <div
+            id="settings-panel-danger"
+            role="tabpanel"
+            aria-labelledby="settings-tab-danger"
+            className={tab === 'danger' ? '' : 'hidden'}
+          >
+            <DangerZoneForm />
           </div>
         </motion.div>
       </div>

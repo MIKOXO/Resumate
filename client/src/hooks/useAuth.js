@@ -9,9 +9,11 @@ import {
   resetPassword,
   updateName,
   changePassword,
+  deleteAccount,
   clearError,
   clearNameError,
   clearPasswordError,
+  clearDeleteError,
   setResetStep,
   resetResetFlow,
 } from '@/store/slices/authSlice'
@@ -27,6 +29,8 @@ export function useAuth() {
     nameError,
     passwordLoading,
     passwordError,
+    deleteLoading,
+    deleteError,
     resetFlow,
   } = useSelector((s) => s.auth)
 
@@ -39,6 +43,8 @@ export function useAuth() {
     nameError,
     passwordLoading,
     passwordError,
+    deleteLoading,
+    deleteError,
     resetFlow,
     login: (email, password) => dispatch(login({ email, password })),
     signup: (name, email, password) => dispatch(signup({ name, email, password })),
@@ -49,9 +55,11 @@ export function useAuth() {
     resetPassword: (code, newPassword, confirmPassword) => dispatch(resetPassword({ code, newPassword, confirmPassword })),
     updateName: (name) => dispatch(updateName({ name })),
     changePassword: (currentPassword, newPassword) => dispatch(changePassword({ currentPassword, newPassword })),
+    deleteAccount: (password) => dispatch(deleteAccount({ password })),
     clearError: () => dispatch(clearError()),
     clearNameError: () => dispatch(clearNameError()),
     clearPasswordError: () => dispatch(clearPasswordError()),
+    clearDeleteError: () => dispatch(clearDeleteError()),
     setResetStep: (step) => dispatch(setResetStep(step)),
     resetResetFlow: () => dispatch(resetResetFlow()),
   }

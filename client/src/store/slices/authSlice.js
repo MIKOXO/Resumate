@@ -89,6 +89,14 @@ export const changePassword = createAsyncThunk('auth/changePassword', async ({ c
   }
 })
 
+export const deleteAccount = createAsyncThunk('auth/deleteAccount', async ({ password }, { rejectWithValue }) => {
+  try {
+    await authService.deleteAccount(password)
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.error || 'Account deletion failed')
+  }
+})
+
 const authSlice = createSlice({
   name: 'auth',
   initialState: {
@@ -100,6 +108,8 @@ const authSlice = createSlice({
     nameError: null,
     passwordLoading: false,
     passwordError: null,
+    deleteLoading: false,
+    deleteError: null,
     authReady: false,
     resetFlow: { step: 'request', email: '' },
   },
@@ -107,6 +117,7 @@ const authSlice = createSlice({
     clearError: (state) => { state.error = null },
     clearNameError: (state) => { state.nameError = null },
     clearPasswordError: (state) => { state.passwordError = null },
+    clearDeleteError: (state) => { state.deleteError = null },
     setResetStep: (state, action) => { state.resetFlow.step = action.payload },
     resetResetFlow: (state) => { state.resetFlow = { step: 'request', email: '' } },
   },
@@ -198,8 +209,22 @@ const authSlice = createSlice({
         state.passwordLoading = false
         state.passwordError = action.payload
       })
+
+      .addCase(deleteAccount.pending, (state) => {
+        state.deleteLoading = true
+        state.deleteError = null
+      })
+      .addCase(deleteAccount.fulfilled, (state) => {
+        state.deleteLoading = false
+        state.isAuthenticated = false
+        state.user = null
+      })
+      .addCase(deleteAccount.rejected, (state, action) => {
+        state.deleteLoading = false
+        state.deleteError = action.payload
+      })
   },
 })
 
-export const { clearError, clearNameError, clearPasswordError, setResetStep, resetResetFlow } = authSlice.actions
+export const { clearError, clearNameError, clearPasswordError, clearDeleteError, setResetStep, resetResetFlow } = authSlice.actions
 export default authSlice.reducer

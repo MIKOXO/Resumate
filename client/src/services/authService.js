@@ -16,6 +16,7 @@ const authService = {
   resetPassword: (code, newPassword, confirmPassword) => api.post('/reset-password', { code, newPassword, confirmPassword }),
   updateName: (name) => api.patch('/me', { name }),
   changePassword: (currentPassword, newPassword) => api.patch('/password', { currentPassword, newPassword }),
+  deleteAccount: (password) => api.delete('/me', { data: { password } }),
 }
 
 export default authService

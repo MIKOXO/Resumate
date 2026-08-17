@@ -21,6 +21,8 @@ export const outlineBtn = () =>
 
 export const destructiveBtn = (disabled) =>
   cn(
-    'inline-flex items-center justify-center gap-2 rounded-lg border border-state-error px-4 py-2 text-sm font-medium text-state-error transition-colors hover:bg-state-error-bg',
-    disabled && 'cursor-not-allowed opacity-50',
+    'inline-flex items-center justify-center gap-2 rounded-lg border border-state-error px-4 py-2 text-sm font-medium text-state-error transition-colors',
+    disabled
+      ? 'cursor-not-allowed opacity-50'
+      : 'hover:bg-state-error-bg',
   )
