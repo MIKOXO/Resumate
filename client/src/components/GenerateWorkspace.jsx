@@ -4,6 +4,7 @@ import { useGeneration } from '@/hooks/useGeneration'
 import DatePicker from '@/components/DatePicker'
 import ResultCard from '@/components/ResultCard'
 import { Spinner } from '@/components/authUi'
+import useAutoDismiss from '@/hooks/useAutoDismiss'
 import { Skeleton } from '@/components/ui/skeleton'
 import { inputClass, primaryBtn } from '@/lib/authUiHelpers'
 import { cn } from '@/lib/utils'
@@ -25,6 +26,7 @@ const GenerateWorkspace = () => {
   const isGenerating = status === 'generating'
   const showGenerating = isGenerating && operatingProspectId === selectedProspectId
   const showError = status === 'error' && operatingProspectId === selectedProspectId
+  const errorVisible = useAutoDismiss(showError ? error : '', null, { timeout: 4000 })
   const result = results[selectedProspectId]
 
   const canGenerate = jobDescription.trim() && companyName.trim() && date && !isGenerating
@@ -118,7 +120,7 @@ const GenerateWorkspace = () => {
         </div>
       )}
 
-      {!showGenerating && showError && error && (
+      {!showGenerating && errorVisible && error && (
         <div className="rounded-md border border-state-error bg-state-error-bg px-3 py-2 text-sm text-state-error">
           {error}
         </div>
