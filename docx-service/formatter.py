@@ -1,245 +1,278 @@
 import io
 import logging
 from collections import Counter
+from copy import deepcopy
 
 from docx import Document
-from docx.shared import Pt, RGBColor
+from docx.shared import Pt
 from docx.oxml.ns import qn
-from docx.oxml import OxmlElement
 
 logger = logging.getLogger(__name__)
 
-KNOWN_HEADERS = {"experience", "education", "skills", "summary", "certifications"}
+KNOWN_HEADER_LABELS = {
+    "experience", "professional experience", "work experience", "employment history",
+    "education", "skills", "technical skills", "key skills", "summary",
+    "professional summary", "qualifications", "certifications", "projects",
+}
+_MAX_HEADER_LEN = 50
 
-# Signals required to classify a paragraph as a section header candidate
-_MAX_HEADER_LEN = 40
+
+def _paragraphs(doc):
+    """Yield body paragraphs, including paragraphs nested in resume tables."""
+    for paragraph in doc.paragraphs:
+        yield paragraph
+
+    def table_paragraphs(table):
+        for row in table.rows:
+            for cell in row.cells:
+                for paragraph in cell.paragraphs:
+                    yield paragraph
+                for nested_table in cell.tables:
+                    yield from table_paragraphs(nested_table)
+
+    for table in doc.tables:
+        yield from table_paragraphs(table)
 
 
-def _run_is_bold(run):
-    if run.bold is not None:
-        return run.bold
-    # Check paragraph-level bold via style
-    style = run.style
+def _style_value(style, property_name):
     while style:
-        if style.font.bold is not None:
-            return style.font.bold
-        style = style.base_style
-    return False
-
-
-def _run_font_size(run):
-    """Return font size in half-points (as Pt object) or None."""
-    if run.font.size:
-        return run.font.size
-    style = run.style
-    while style:
-        if style.font.size:
-            return style.font.size
+        value = getattr(style.font, property_name)
+        if value is not None:
+            return value
         style = style.base_style
     return None
 
 
-def _para_is_bold(para):
-    runs = [r for r in para.runs if r.text.strip()]
-    if not runs:
-        return False
-    return all(_run_is_bold(r) for r in runs)
+def _document_default_value(doc, property_name):
+    """Read Word's document default when no run or named style defines it."""
+    value = _style_value(doc.styles["Normal"], property_name)
+    if value is not None:
+        return value
 
-
-def _para_font_size(para):
-    """Return the most common font size among runs, or None."""
-    sizes = [_run_font_size(r) for r in para.runs if r.text.strip() and _run_font_size(r)]
-    if not sizes:
+    tag_by_property = {"size": "w:sz", "name": "w:rFonts"}
+    tag = tag_by_property.get(property_name)
+    if not tag:
         return None
-    return Counter(sizes).most_common(1)[0][0]
+    elements = doc.styles.element.xpath(f".//w:docDefaults/w:rPrDefault/w:rPr/{tag}")
+    if not elements:
+        return None
+    if property_name == "size":
+        value = elements[0].get(qn("w:val"))
+        return Pt(int(value) / 2) if value and value.isdigit() else None
+    return elements[0].get(qn("w:ascii")) or elements[0].get(qn("w:hAnsi"))
 
 
-def _para_font_name(para):
-    for run in para.runs:
-        if run.text.strip() and run.font.name:
-            return run.font.name
-    style = para.style
-    while style:
-        if style.font.name:
-            return style.font.name
-        style = style.base_style
-    return None
+def _effective_run_value(run, paragraph, doc, property_name):
+    value = getattr(run.font, property_name)
+    if value is not None:
+        return value
+    value = _style_value(run.style, property_name)
+    if value is not None:
+        return value
+    value = _style_value(paragraph.style, property_name)
+    if value is not None:
+        return value
+    return _document_default_value(doc, property_name)
 
 
-def _para_color(para):
-    for run in para.runs:
-        if run.text.strip() and run.font.color and run.font.color.type is not None:
-            try:
-                return run.font.color.rgb
-            except Exception:
-                pass
-    return None
+def _meaningful_runs(paragraph):
+    return [run for run in paragraph.runs if run.text.strip()]
 
 
-def _para_all_caps(para):
-    for run in para.runs:
-        if run.text.strip():
-            if run.font.all_caps:
-                return True
-    return para.text == para.text.upper() and para.text.strip().isalpha()
+def _paragraph_value(paragraph, doc, property_name):
+    values = [
+        _effective_run_value(run, paragraph, doc, property_name)
+        for run in _meaningful_runs(paragraph)
+    ]
+    values = [value for value in values if value is not None]
+    if values:
+        return Counter(values).most_common(1)[0][0]
+    return _style_value(paragraph.style, property_name) or _document_default_value(doc, property_name)
 
 
-def _is_header_candidate(para, body_size):
-    text = para.text.strip()
-    if not text or len(text) > _MAX_HEADER_LEN:
-        return False
-
-    signals = 0
-    if _para_is_bold(para):
-        signals += 1
-    if text.upper() == text and text.replace(" ", "").isalpha():
-        signals += 1  # all-caps alphabetic
-    size = _para_font_size(para)
-    if size and body_size and size > body_size * 1.1:
-        signals += 1
-
-    return signals >= 1 and (
-        _para_is_bold(para)
-        or (text.upper() == text and text.replace(" ", "").isalpha())
+def _paragraph_is_bold(paragraph, doc):
+    runs = _meaningful_runs(paragraph)
+    return bool(runs) and all(
+        _effective_run_value(run, paragraph, doc, "bold") is True for run in runs
     )
 
 
-def _style_key(font_name, font_size, bold):
-    return (font_name, font_size, bold)
+def _paragraph_all_caps(paragraph, doc):
+    text = paragraph.text.strip()
+    if text and text == text.upper() and any(character.isalpha() for character in text):
+        return True
+    return any(
+        _effective_run_value(run, paragraph, doc, "all_caps") is True
+        for run in _meaningful_runs(paragraph)
+    )
 
 
-def detect_header_style(doc, body_font_name, body_font_size, filename="<unknown>"):
-    """
-    Returns a dict with keys: font_name, font_size, bold, color, all_caps.
-    Falls back to plain 12pt bold body font if no confident pattern found.
-    """
-    candidates = []
-    for para in doc.paragraphs:
-        if _is_header_candidate(para, body_font_size):
-            text_lower = para.text.strip().lower()
-            # Prefer known section header words
-            if any(h in text_lower for h in KNOWN_HEADERS):
-                candidates.insert(0, para)
-            else:
-                candidates.append(para)
+def _normalized_label(text):
+    return " ".join("".join(character if character.isalnum() else " " for character in text.lower()).split())
 
-    if not candidates:
-        logger.warning("Header fallback used for '%s': no header candidates found.", filename)
-        print(f"[docx-service] Header fallback used for '{filename}': no header candidates found.")
-        return {
-            "font_name": body_font_name or "Calibri",
-            "font_size": Pt(12),
-            "bold": True,
-            "color": None,
-            "all_caps": False,
-        }
 
-    # Tally styles among candidates to find dominant pattern
-    style_counts = Counter()
-    style_map = {}
-    for para in candidates:
-        fn = _para_font_name(para) or body_font_name or "Calibri"
-        fs = _para_font_size(para) or Pt(12)
-        bold = _para_is_bold(para)
-        key = _style_key(fn, fs, bold)
-        style_counts[key] += 1
-        if key not in style_map:
-            style_map[key] = {
-                "font_name": fn,
-                "font_size": fs,
-                "bold": bold,
-                "color": _para_color(para),
-                "all_caps": _para_all_caps(para),
-            }
+def _header_score(paragraph, doc, body_size):
+    text = paragraph.text.strip()
+    if not text or len(text) > _MAX_HEADER_LEN:
+        return 0
 
-    dominant_key = style_counts.most_common(1)[0][0]
-    return style_map[dominant_key]
+    known_label = _normalized_label(text) in KNOWN_HEADER_LABELS
+    heading_style = "heading" in (paragraph.style.name or "").lower()
+    bold = _paragraph_is_bold(paragraph, doc)
+    all_caps = _paragraph_all_caps(paragraph, doc)
+    size = _paragraph_value(paragraph, doc, "size")
+    larger_than_body = bool(size and body_size and size > body_size * 1.08)
+    visual_signals = sum((bold, all_caps, larger_than_body))
+    if not (known_label or heading_style) and visual_signals < 2:
+        return 0
+    return (4 if known_label else 0) + (2 if heading_style else 0) + visual_signals
+
+
+def _style_signature(paragraph, doc):
+    color = None
+    for run in _meaningful_runs(paragraph):
+        if run.font.color and run.font.color.type is not None:
+            try:
+                color = str(run.font.color.rgb)
+            except Exception:
+                pass
+            break
+    return (
+        _paragraph_value(paragraph, doc, "name") or "Calibri",
+        _paragraph_value(paragraph, doc, "size") or Pt(12),
+        _paragraph_is_bold(paragraph, doc),
+        color,
+        _paragraph_all_caps(paragraph, doc),
+    )
+
+
+def _dominant_body_style(doc, excluded_paragraphs=()):
+    excluded_ids = {id(paragraph) for paragraph in excluded_paragraphs}
+    tally = Counter()
+    representative = {}
+    for paragraph in _paragraphs(doc):
+        text = paragraph.text.strip()
+        if not text or id(paragraph) in excluded_ids:
+            continue
+        signature = _style_signature(paragraph, doc)[:2]
+        tally[signature] += len(text)
+        representative.setdefault(signature, paragraph)
+    if not tally:
+        return None, None, None
+    signature, _ = tally.most_common(1)[0]
+    return signature[0], signature[1], representative[signature]
 
 
 def detect_body_style(doc, filename="<unknown>"):
-    """
-    Returns (font_name, font_size) of the dominant non-header body text.
-    Falls back to Calibri 12pt if inconclusive.
-    """
+    """Return the dominant effective body font name and size."""
+    font_name, font_size, _ = _dominant_body_style(doc)
+    if font_name and font_size:
+        return font_name, font_size
+    logger.warning("Body fallback used for '%s': no body paragraphs found.", filename)
+    return _document_default_value(doc, "name") or "Calibri", Pt(12)
+
+
+def detect_header_style(doc, body_font_name, body_font_size, filename="<unknown>"):
+    """Return the dominant full header style and its representative paragraph."""
+    candidates = [
+        (paragraph, _header_score(paragraph, doc, body_font_size))
+        for paragraph in _paragraphs(doc)
+    ]
+    candidates = [(paragraph, score) for paragraph, score in candidates if score]
+    if not candidates:
+        logger.warning("Header fallback used for '%s': no header candidates found.", filename)
+        return {
+            "font_name": body_font_name or "Calibri", "font_size": Pt(12),
+            "bold": True, "color": None, "all_caps": False, "paragraph": None,
+        }
+
     tally = Counter()
-    first_font = None
-
-    for para in doc.paragraphs:
-        text = para.text.strip()
-        if not text:
-            continue
-        fn = _para_font_name(para)
-        fs = _para_font_size(para)
-        if fn and fs:
-            if first_font is None:
-                first_font = fn
-            tally[(fn, fs)] += 1
-
-    if not tally:
-        logger.warning("Body fallback used for '%s': no body paragraphs found.", filename)
-        print(f"[docx-service] Body fallback used for '{filename}': no body paragraphs found.")
-        return first_font or "Calibri", Pt(12)
-
-    (dominant_fn, dominant_fs), _ = tally.most_common(1)[0]
-    return dominant_fn, dominant_fs
+    representative = {}
+    for paragraph, score in candidates:
+        signature = _style_signature(paragraph, doc)
+        tally[signature] += score
+        representative.setdefault(signature, paragraph)
+    signature, _ = tally.most_common(1)[0]
+    return {
+        "font_name": signature[0], "font_size": signature[1], "bold": signature[2],
+        "color": signature[3], "all_caps": signature[4],
+        "paragraph": representative[signature],
+    }
 
 
-def _apply_run_style(run, font_name, font_size, bold, color, all_caps):
+def _copy_paragraph_format(source, target):
+    source_properties = source._p.pPr
+    if source_properties is None:
+        return
+    target_properties = target._p.pPr
+    if target_properties is not None:
+        target._p.remove(target_properties)
+    target._p.insert(0, deepcopy(source_properties))
+
+
+def _copy_run_format(source, target):
+    source_properties = source._r.rPr
+    if source_properties is None:
+        return
+    target_properties = target._r.rPr
+    if target_properties is not None:
+        target._r.remove(target_properties)
+    target._r.insert(0, deepcopy(source_properties))
+
+
+def _first_meaningful_run(paragraph):
+    runs = _meaningful_runs(paragraph)
+    return runs[0] if runs else None
+
+
+def _apply_fallback_run_style(run, font_name, font_size, bold):
     run.font.name = font_name
     run.font.size = font_size
     run.font.bold = bold
-    if color:
-        run.font.color.rgb = color
-    if all_caps:
-        run.font.all_caps = True
 
 
 def insert_core_competencies(docx_bytes, bullet_lines, filename="<unknown>"):
-    """
-    Inserts a CORE COMPETENCIES section at the end of the document.
-
-    Args:
-        docx_bytes: bytes of the original .docx file
-        bullet_lines: list of plain-text bullet strings (without leading "• ")
-        filename: used only for fallback logging
-
-    Returns:
-        bytes of the modified .docx
-    """
+    """Append a formatting-matched Core Competencies section to a .docx file."""
     doc = Document(io.BytesIO(docx_bytes))
 
+    initial_body_name, initial_body_size = detect_body_style(doc, filename)
+    header_style = detect_header_style(doc, initial_body_name, initial_body_size, filename)
+    header_paragraph = header_style["paragraph"]
+    _, _, body_paragraph = _dominant_body_style(doc, [header_paragraph] if header_paragraph else [])
     body_font_name, body_font_size = detect_body_style(doc, filename)
-    header_style = detect_header_style(doc, body_font_name, body_font_size, filename)
+    if body_paragraph:
+        body_font_name, body_font_size = _style_signature(body_paragraph, doc)[:2]
 
-    # Append header paragraph
     header_para = doc.add_paragraph()
-    header_run = header_para.add_run("CORE COMPETENCIES")
-    _apply_run_style(
-        header_run,
-        header_style["font_name"],
-        header_style["font_size"],
-        header_style["bold"],
-        header_style["color"],
-        header_style["all_caps"],
+    if header_paragraph:
+        _copy_paragraph_format(header_paragraph, header_para)
+    # Keep the source header's horizontal layout while starting this section cleanly.
+    header_para.paragraph_format.page_break_before = True
+    header_run = header_para.add_run(
+        "CORE COMPETENCIES" if header_style["all_caps"] else "Core Competencies"
     )
+    header_source_run = _first_meaningful_run(header_paragraph) if header_paragraph else None
+    if header_source_run:
+        _copy_run_format(header_source_run, header_run)
+    else:
+        _apply_fallback_run_style(
+            header_run, header_style["font_name"], header_style["font_size"], header_style["bold"]
+        )
 
-    # Append one paragraph per bullet
+    body_source_run = _first_meaningful_run(body_paragraph) if body_paragraph else None
     for line in bullet_lines:
         line = line.strip()
         if not line:
             continue
         bullet_para = doc.add_paragraph()
+        if body_paragraph:
+            _copy_paragraph_format(body_paragraph, bullet_para)
         bullet_run = bullet_para.add_run(f"\u2022 {line}")
-        _apply_run_style(
-            bullet_run,
-            body_font_name,
-            body_font_size,
-            False,
-            None,
-            False,
-        )
+        if body_source_run:
+            _copy_run_format(body_source_run, bullet_run)
+        else:
+            _apply_fallback_run_style(bullet_run, body_font_name, body_font_size, False)
 
-    buf = io.BytesIO()
-    doc.save(buf)
-    buf.seek(0)
-    return buf.read()
+    buffer = io.BytesIO()
+    doc.save(buffer)
+    return buffer.getvalue()
