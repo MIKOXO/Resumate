@@ -34,7 +34,7 @@ export const generateCoreCompetencies = async (jobDescriptionText) => {
   let response;
   try {
     response = await getClient().chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+      model: 'openai/gpt-oss-120b',
       messages: [
         {
           role: 'user',
