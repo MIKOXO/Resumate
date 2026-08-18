@@ -5,6 +5,7 @@ import User from '../models/User.js';
 import Prospect from '../models/Prospect.js';
 import TeamMember from '../models/TeamMember.js';
 import { sendEmail } from './emailService.js';
+import { buildEmailHtml, codeBlock } from './emailTemplate.js';
 
 const SAFE_FIELDS = '_id name email emailVerified createdAt';
 
@@ -40,14 +41,54 @@ const sendVerificationEmail = ({ to, name, code }) =>
   sendEmail({
     to,
     subject: 'Your Resumate verification code',
-    html: `<p>Hi ${name},</p><p>Your Resumate verification code is: <strong>${code}</strong></p><p>It expires in 10 minutes.</p>`,
+    html: buildEmailHtml({
+      preheader: `Your verification code is ${code}`,
+      title: 'Verify your email',
+      body: `<p style="margin:0 0 16px;color:#A1A1AA;">Hi ${name},</p>
+             <p style="margin:0 0 8px;color:#A1A1AA;">Use the code below to verify your Resumate account:</p>
+             ${codeBlock(code)}
+             <p style="margin:8px 0 0;color:#5C5C61;font-size:13px;">This code expires in 10 minutes.</p>`,
+    }),
   });
 
 const sendResetEmail = ({ to, name, code }) =>
   sendEmail({
     to,
     subject: 'Your Resumate password reset code',
-    html: `<p>Hi ${name},</p><p>Your Resumate password reset code is: <strong>${code}</strong></p><p>It expires in 10 minutes.</p>`,
+    html: buildEmailHtml({
+      preheader: `Your password reset code is ${code}`,
+      title: 'Reset your password',
+      body: `<p style="margin:0 0 16px;color:#A1A1AA;">Hi ${name},</p>
+             <p style="margin:0 0 8px;color:#A1A1AA;">You requested a password reset. Use the code below:</p>
+             ${codeBlock(code)}
+             <p style="margin:8px 0 0;color:#5C5C61;font-size:13px;">This code expires in 10 minutes. If you didn't request this, you can safely ignore this email.</p>`,
+    }),
+  });
+
+const sendPasswordChangedEmail = ({ to, name }) =>
+  sendEmail({
+    to,
+    subject: 'Your Resumate password was changed',
+    html: buildEmailHtml({
+      preheader: 'Your password was changed successfully',
+      title: 'Password changed',
+      body: `<p style="margin:0 0 16px;color:#A1A1AA;">Hi ${name},</p>
+             <p style="margin:0 0 8px;color:#A1A1AA;">Your Resumate password was just changed.</p>
+             <p style="margin:0;color:#5C5C61;font-size:13px;">If you didn't do this, reset your password immediately or contact support.</p>`,
+    }),
+  });
+
+const sendAccountDeletedEmail = ({ to, name }) =>
+  sendEmail({
+    to,
+    subject: 'Your Resumate account has been deleted',
+    html: buildEmailHtml({
+      preheader: 'Your account has been permanently deleted',
+      title: 'Account deleted',
+      body: `<p style="margin:0 0 16px;color:#A1A1AA;">Hi ${name},</p>
+             <p style="margin:0 0 8px;color:#A1A1AA;">Your Resumate account and all associated data have been permanently deleted.</p>
+             <p style="margin:0;color:#5C5C61;font-size:13px;">This action cannot be undone. Thanks for using Resumate.</p>`,
+    }),
   });
 
 /**
@@ -370,6 +411,10 @@ export const changePassword = async ({ userId, currentPassword, newPassword }) =
   user.password = await bcrypt.hash(newPassword, 12);
   await user.save();
 
+  sendPasswordChangedEmail({ to: user.email, name: user.name }).catch((err) =>
+    console.error('Failed to send password-changed email:', err),
+  );
+
   return toSafeUser(user);
 };
 
@@ -403,4 +448,8 @@ export const deleteAccount = async ({ userId, password }) => {
   );
 
   await User.deleteOne({ _id: userId });
+
+  sendAccountDeletedEmail({ to: user.email, name: user.name }).catch((err) =>
+    console.error('Failed to send account-deleted email:', err),
+  );
 };
