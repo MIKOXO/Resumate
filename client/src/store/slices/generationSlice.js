@@ -43,6 +43,12 @@ const generationSlice = createSlice({
         state.error = null
       }
     },
+    clearGenerationState: (state) => {
+      state.status = 'idle'
+      state.error = null
+      state.operatingProspectId = null
+      state.results = {}
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -73,5 +79,5 @@ const generationSlice = createSlice({
   },
 })
 
-export const { clearProspectResult } = generationSlice.actions
+export const { clearProspectResult, clearGenerationState } = generationSlice.actions
 export default generationSlice.reducer

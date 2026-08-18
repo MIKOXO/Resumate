@@ -8,6 +8,7 @@ import EmptyState from '@/components/EmptyState'
 import TeamMemberTree from '@/components/TeamMemberTree'
 import GenerateWorkspace from '@/components/GenerateWorkspace'
 import { clearSelectedProspect, fetchTeamMembers } from '@/store/slices/teamMembersSlice'
+import { clearGenerationState } from '@/store/slices/generationSlice'
 
 const SHELL_ANIM = {
   initial: { opacity: 0, y: 8 },
@@ -23,6 +24,7 @@ const Dashboard = () => {
     dispatch(fetchTeamMembers())
     return () => {
       dispatch(clearSelectedProspect())
+      dispatch(clearGenerationState())
     }
   }, [dispatch])
 
