@@ -97,7 +97,7 @@ const OTPInput = ({ onComplete, onResend, resendLoading }) => {
 
   return (
     <div className="space-y-3">
-      <div className="flex justify-between gap-2">
+      <div className="flex justify-between gap-1.5 sm:gap-2">
         {digits.map((d, i) => (
           <motion.input
             key={i}
@@ -110,7 +110,7 @@ const OTPInput = ({ onComplete, onResend, resendLoading }) => {
             onKeyDown={(e) => handleKeyDown(i, e)}
             onPaste={handlePaste}
             whileFocus={{ scale: 1.05 }}
-            className="h-10 w-10 rounded-md border border-strong bg-elevated text-center text-sm text-primary outline-none focus:border-accent-primary transition-colors"
+            className="h-10 w-full min-w-0 rounded-md border border-strong bg-elevated text-center text-sm text-primary outline-none focus:border-accent-primary transition-colors"
           />
         ))}
       </div>

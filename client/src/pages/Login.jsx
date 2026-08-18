@@ -86,7 +86,7 @@ const Login = () => {
         </button>
       </form>
 
-      <div className="mt-4 flex items-center justify-between text-sm">
+      <div className="mt-4 flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between">
         <p className="text-muted">
           Don't have an account?{' '}
           <Link to="/signup" className="text-accent-primary hover:underline">Sign up</Link>

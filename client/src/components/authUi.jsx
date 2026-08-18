@@ -18,7 +18,7 @@ export const AuthCard = ({ children, className }) => (
     </div>
     <motion.div
       {...CARD_ANIM}
-      className={cn('w-full max-w-sm rounded-lg border border-default bg-surface p-6 shadow-sm', className)}
+      className={cn('w-full max-w-sm rounded-lg border border-default bg-surface p-4 sm:p-6 shadow-sm', className)}
     >
       {children}
     </motion.div>
