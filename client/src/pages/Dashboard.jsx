@@ -24,13 +24,13 @@ const Dashboard = () => {
   }, [dispatch])
 
   return (
-    <motion.div {...SHELL_ANIM} className="flex h-svh flex-col bg-base">
+    <motion.div {...SHELL_ANIM} className="flex min-h-svh flex-col bg-base md:h-svh">
       <TopBar />
-      <div className="flex min-h-0 flex-1">
-        <aside className="flex w-full min-h-0 flex-col bg-base md:w-[260px] md:shrink-0 md:border-r md:border-default">
+      <div className="flex min-h-0 flex-1 flex-col md:flex-row md:overflow-hidden">
+        <aside className="flex min-h-0 flex-1 flex-col border-b border-default bg-base md:w-[260px] md:flex-none md:border-b-0 md:border-r">
           <TeamMemberTree />
         </aside>
-        <main className="hidden min-w-0 flex-1 flex-col overflow-y-auto bg-base md:flex">
+        <main className="flex min-w-0 flex-1 flex-col overflow-y-auto bg-base">
           {selectedProspectId
             ? <GenerateWorkspace />
             : <EmptyState className="w-full flex-1" icon={FileText} title="Select a prospect to get started" />}

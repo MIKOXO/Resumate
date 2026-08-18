@@ -48,11 +48,11 @@ const GenerateWorkspace = () => {
   }
 
   return (
-    <div className="flex flex-col gap-5 p-6 max-w-2xl w-full">
+    <div className="flex w-full max-w-2xl flex-col gap-5 p-4 sm:p-6">
       <h2 className="text-base font-semibold text-primary">{prospect?.name ?? 'Prospect'}</h2>
 
       <div className="flex flex-col gap-3">
-        <div className="flex gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row">
           <div className="flex-1">
             <label className="mb-1 block text-xs text-muted">Company Name</label>
             <input
@@ -80,19 +80,19 @@ const GenerateWorkspace = () => {
             rows={8}
             className={cn(
               inputClass(false),
-              'resize-none h-[240px] overflow-y-auto custom-scrollbar pr-3',
+              'h-[200px] resize-none overflow-y-auto custom-scrollbar pr-3 sm:h-[240px]',
               isGenerating && 'cursor-not-allowed opacity-50',
             )}
           />
         </div>
 
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
           <button
             type="button"
             onClick={handleClear}
             disabled={!hasAnyField || isGenerating}
             className={cn(
-              'w-auto px-4 py-2 text-sm font-medium rounded-lg border border-default transition-colors',
+              'w-full rounded-lg border border-default px-4 py-2 text-sm font-medium transition-colors sm:w-auto',
               hasAnyField && !isGenerating
                 ? 'text-muted hover:text-primary hover:bg-surface cursor-pointer'
                 : 'cursor-not-allowed text-disabled',
@@ -104,7 +104,7 @@ const GenerateWorkspace = () => {
             type="button"
             onClick={handleGenerate}
             disabled={!canGenerate}
-            className={cn(primaryBtn(!canGenerate), 'w-auto px-6', canGenerate && 'cursor-pointer')}
+            className={cn(primaryBtn(!canGenerate), 'w-full px-6 sm:w-auto', canGenerate && 'cursor-pointer')}
           >
             {isGenerating ? <><Spinner /> Generating</> : 'Generate'}
           </button>

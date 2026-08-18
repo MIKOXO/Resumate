@@ -25,14 +25,14 @@ const ResultCard = ({ filename, blob, onClear }) => {
   return (
     <motion.div
       {...CARD_ANIM}
-      className="rounded-lg border border-default bg-surface p-4 flex items-center justify-between gap-4"
+      className="flex flex-col gap-3 rounded-lg border border-default bg-surface p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
     >
       <span className="truncate text-sm text-primary" title={filename}>{filename}</span>
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
         <button
           type="button"
           onClick={handleDownload}
-          className={cn(primaryBtn(false), 'w-auto px-4 cursor-pointer')}
+          className={cn(primaryBtn(false), 'w-full px-4 cursor-pointer sm:w-auto')}
         >
           <Download className="h-4 w-4" />
           Download

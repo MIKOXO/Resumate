@@ -257,20 +257,20 @@ const Settings = () => {
       <div className="absolute left-6 top-6">
         <Logo />
       </div>
-      <div className="my-auto flex w-full max-w-sm flex-col py-12">
+      <div className="my-auto flex w-full max-w-sm flex-col py-8 sm:py-12">
         <Link
           to="/dashboard"
-          className="mb-4 inline-flex items-center gap-1.5 self-start text-sm text-muted transition-colors hover:text-primary"
+          className="mb-3 inline-flex items-center gap-1.5 self-start text-sm text-muted transition-colors hover:text-primary sm:mb-4"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to dashboard
         </Link>
 
-        <motion.div {...CARD_ANIM} className="w-full rounded-lg border border-default bg-surface p-6 shadow-sm">
+        <motion.div {...CARD_ANIM} className="w-full rounded-lg border border-default bg-surface p-4 shadow-sm sm:p-6">
           <h1 className="mb-1 text-lg font-semibold text-primary">Settings</h1>
-          <p className="mb-5 text-sm text-muted">Manage your account.</p>
+          <p className="mb-4 text-sm text-muted sm:mb-5">Manage your account.</p>
 
-          <div role="tablist" aria-label="Settings sections" className="mb-5 grid grid-cols-3 gap-1 rounded-md border border-default bg-base p-1">
+          <div role="tablist" aria-label="Settings sections" className="mb-4 grid grid-cols-3 gap-1 rounded-md border border-default bg-base p-1 sm:mb-5">
             {TABS.map(({ id, label }) => {
               const active = tab === id
               return (
