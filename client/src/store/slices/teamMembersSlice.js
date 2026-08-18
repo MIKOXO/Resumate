@@ -103,6 +103,10 @@ const teamMembersSlice = createSlice({
       state.selectedProspectId = action.payload.prospectId
       state.selectedTeamMemberId = action.payload.teamMemberId
     },
+    clearSelectedProspect: (state) => {
+      state.selectedProspectId = null
+      state.selectedTeamMemberId = null
+    },
     clearError: (state) => {
       state.error = null
     },
@@ -199,5 +203,5 @@ const teamMembersSlice = createSlice({
   },
 })
 
-export const { setExpanded, selectProspect, clearError } = teamMembersSlice.actions
+export const { setExpanded, selectProspect, clearSelectedProspect, clearError } = teamMembersSlice.actions
 export default teamMembersSlice.reducer

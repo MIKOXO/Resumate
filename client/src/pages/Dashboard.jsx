@@ -7,7 +7,7 @@ import TopBar from '@/components/TopBar'
 import EmptyState from '@/components/EmptyState'
 import TeamMemberTree from '@/components/TeamMemberTree'
 import GenerateWorkspace from '@/components/GenerateWorkspace'
-import { fetchTeamMembers } from '@/store/slices/teamMembersSlice'
+import { clearSelectedProspect, fetchTeamMembers } from '@/store/slices/teamMembersSlice'
 
 const SHELL_ANIM = {
   initial: { opacity: 0, y: 8 },
@@ -21,6 +21,9 @@ const Dashboard = () => {
 
   useEffect(() => {
     dispatch(fetchTeamMembers())
+    return () => {
+      dispatch(clearSelectedProspect())
+    }
   }, [dispatch])
 
   return (
