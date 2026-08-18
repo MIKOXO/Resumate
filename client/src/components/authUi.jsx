@@ -22,6 +22,17 @@ export const AuthCard = ({ children, className }) => (
     >
       {children}
     </motion.div>
+    <p className="absolute bottom-6 left-0 right-0 text-center text-xs text-disabled">
+      Designed and built by{' '}
+      <a
+        href="https://github.com/MIKOXO"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-muted transition-colors hover:text-primary"
+      >
+        Mikiyas
+      </a>
+    </p>
   </div>
 )
 
