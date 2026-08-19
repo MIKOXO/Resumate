@@ -1,4 +1,6 @@
 import { GetObjectCommand } from '@aws-sdk/client-s3';
+import http from 'node:http';
+import https from 'node:https';
 import axios from 'axios';
 import FormData from 'form-data';
 
@@ -8,6 +10,8 @@ import { generateCoreCompetencies } from './groqService.js';
 
 const DOCX_SERVICE_URL = process.env.DOCX_SERVICE_URL || 'http://localhost:8001';
 const TIMEOUT_MS = 30_000;
+const HTTP_KEEP_ALIVE_AGENT = new http.Agent({ keepAlive: true });
+const HTTPS_KEEP_ALIVE_AGENT = new https.Agent({ keepAlive: true });
 
 const makeError = (message, status) => {
   const err = new Error(message);
@@ -27,6 +31,8 @@ export const generateResume = async ({
   companyName,
   date,
 }) => {
+  const abortController = new AbortController();
+
   const chain = async () => {
     // Step 1: confirm prospect ownership
     const prospect = await Prospect.findOne({ _id: prospectId, ownerId, teamMemberId });
@@ -62,6 +68,13 @@ export const generateResume = async ({
       const res = await axios.post(`${DOCX_SERVICE_URL}/generate-section`, form, {
         headers: form.getHeaders(),
         responseType: 'arraybuffer',
+        signal: abortController.signal,
+        httpAgent: DOCX_SERVICE_URL.startsWith('https:')
+          ? undefined
+          : HTTP_KEEP_ALIVE_AGENT,
+        httpsAgent: DOCX_SERVICE_URL.startsWith('https:')
+          ? HTTPS_KEEP_ALIVE_AGENT
+          : undefined,
       });
       modifiedDocx = Buffer.from(res.data);
     } catch {
@@ -80,6 +93,13 @@ export const generateResume = async ({
       const res = await axios.post(`${DOCX_SERVICE_URL}/convert-to-pdf`, form, {
         headers: form.getHeaders(),
         responseType: 'arraybuffer',
+        signal: abortController.signal,
+        httpAgent: DOCX_SERVICE_URL.startsWith('https:')
+          ? undefined
+          : HTTP_KEEP_ALIVE_AGENT,
+        httpsAgent: DOCX_SERVICE_URL.startsWith('https:')
+          ? HTTPS_KEEP_ALIVE_AGENT
+          : undefined,
       });
       pdfBuffer = Buffer.from(res.data);
       contentDisposition = res.headers['content-disposition'] || `attachment; filename="${prospect.name}_${companyName}_${date}.pdf"`;
@@ -90,12 +110,15 @@ export const generateResume = async ({
     return { pdfBuffer, contentDisposition };
   };
 
-  const timeout = new Promise((_, reject) =>
-    setTimeout(
-      () => reject(makeError('Generation is taking longer than expected, please try again.', 504)),
-      TIMEOUT_MS
-    )
-  );
+  let timeoutId;
+  const timeout = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => {
+      abortController.abort();
+      reject(makeError('Generation is taking longer than expected, please try again.', 504));
+    }, TIMEOUT_MS);
+  });
 
-  return Promise.race([chain(), timeout]);
+  return Promise.race([chain(), timeout]).finally(() => {
+    clearTimeout(timeoutId);
+  });
 };
