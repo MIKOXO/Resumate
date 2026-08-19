@@ -2,6 +2,7 @@ import io
 import unittest
 
 from docx import Document
+from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING
 from docx.shared import Pt
 
 import formatter
@@ -67,6 +68,123 @@ class FormatterTests(unittest.TestCase):
         )))
 
         self.assertEqual(result.paragraphs[-2].text, "Core Competencies")
+
+    def test_line_spacing_copied_to_bullets(self):
+        document = Document()
+        document.styles["Normal"].font.name = "Calibri"
+        document.styles["Normal"].font.size = Pt(11)
+        body = document.add_paragraph("Body paragraph with specific line spacing.")
+        body.paragraph_format.line_spacing = 1.5
+        body.paragraph_format.line_spacing_rule = WD_LINE_SPACING.MULTIPLE
+        document.add_paragraph("Another body paragraph.")
+
+        result = Document(io.BytesIO(formatter.insert_core_competencies(
+            self._document_bytes(document), ["Skill one", "Skill two"], "resume.docx"
+        )))
+        bullet = result.paragraphs[-1]
+
+        self.assertEqual(bullet.paragraph_format.line_spacing, 1.5)
+        self.assertEqual(bullet.paragraph_format.line_spacing_rule, WD_LINE_SPACING.ONE_POINT_FIVE)
+
+    def test_space_after_copied_to_bullets(self):
+        document = Document()
+        document.styles["Normal"].font.name = "Calibri"
+        document.styles["Normal"].font.size = Pt(10)
+        body = document.add_paragraph("Body paragraph with space after.")
+        body.paragraph_format.space_after = Pt(6)
+        document.add_paragraph("Another body paragraph.")
+
+        result = Document(io.BytesIO(formatter.insert_core_competencies(
+            self._document_bytes(document), ["Skill one"], "resume.docx"
+        )))
+        bullet = result.paragraphs[-1]
+
+        self.assertEqual(bullet.paragraph_format.space_after, Pt(6))
+
+    def test_local_spacing_preferred_over_global(self):
+        document = Document()
+        document.styles["Normal"].font.name = "Calibri"
+        document.styles["Normal"].font.size = Pt(10)
+        early = document.add_paragraph("Early paragraph with tight spacing.")
+        early.paragraph_format.space_after = Pt(2)
+        early.paragraph_format.line_spacing = 1.0
+        early.paragraph_format.line_spacing_rule = WD_LINE_SPACING.MULTIPLE
+        for _ in range(6):
+            p = document.add_paragraph("Later body paragraph with different spacing.")
+            p.paragraph_format.space_after = Pt(8)
+            p.paragraph_format.line_spacing = 1.15
+            p.paragraph_format.line_spacing_rule = WD_LINE_SPACING.MULTIPLE
+
+        result = Document(io.BytesIO(formatter.insert_core_competencies(
+            self._document_bytes(document), ["Skill one"], "resume.docx"
+        )))
+        bullet = result.paragraphs[-1]
+
+        self.assertEqual(bullet.paragraph_format.space_after, Pt(8))
+        self.assertEqual(bullet.paragraph_format.line_spacing, 1.15)
+
+    def test_inherited_spacing_resolved_from_style(self):
+        document = Document()
+        document.styles["Normal"].font.name = "Calibri"
+        document.styles["Normal"].font.size = Pt(10)
+        document.styles["Normal"].paragraph_format.line_spacing = 1.15
+        document.styles["Normal"].paragraph_format.line_spacing_rule = WD_LINE_SPACING.MULTIPLE
+        document.styles["Normal"].paragraph_format.space_after = Pt(4)
+        document.add_paragraph("Body paragraph inheriting from Normal style.")
+        document.add_paragraph("Another paragraph inheriting spacing.")
+
+        result = Document(io.BytesIO(formatter.insert_core_competencies(
+            self._document_bytes(document), ["Skill one"], "resume.docx"
+        )))
+        bullet = result.paragraphs[-1]
+
+        self.assertEqual(bullet.paragraph_format.line_spacing, 1.15)
+        self.assertEqual(bullet.paragraph_format.space_after, Pt(4))
+
+    def test_justified_alignment_matched(self):
+        document = Document()
+        document.styles["Normal"].font.name = "Calibri"
+        document.styles["Normal"].font.size = Pt(10)
+        for _ in range(3):
+            p = document.add_paragraph("Justified body paragraph with enough text to fill.")
+            p.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+
+        result = Document(io.BytesIO(formatter.insert_core_competencies(
+            self._document_bytes(document), ["Skill one"], "resume.docx"
+        )))
+        bullet = result.paragraphs[-1]
+
+        self.assertEqual(bullet.paragraph_format.alignment, WD_ALIGN_PARAGRAPH.JUSTIFY)
+
+    def test_left_indent_matched(self):
+        document = Document()
+        document.styles["Normal"].font.name = "Calibri"
+        document.styles["Normal"].font.size = Pt(10)
+        for _ in range(3):
+            p = document.add_paragraph("Indented body paragraph.")
+            p.paragraph_format.left_indent = Pt(24)
+
+        result = Document(io.BytesIO(formatter.insert_core_competencies(
+            self._document_bytes(document), ["Skill one"], "resume.docx"
+        )))
+        bullet = result.paragraphs[-1]
+
+        self.assertEqual(bullet.paragraph_format.left_indent, Pt(24))
+
+    def test_numbering_properties_stripped_from_bullets(self):
+        document = Document()
+        document.styles["Normal"].font.name = "Calibri"
+        document.styles["Normal"].font.size = Pt(10)
+        document.add_paragraph("Body paragraph one.")
+        document.add_paragraph("Body paragraph two.")
+
+        result = Document(io.BytesIO(formatter.insert_core_competencies(
+            self._document_bytes(document), ["Skill one"], "resume.docx"
+        )))
+        bullet = result.paragraphs[-1]
+
+        numPr = bullet._p.pPr.find(formatter.qn("w:numPr")) if bullet._p.pPr is not None else None
+        self.assertIsNone(numPr)
 
 
 if __name__ == "__main__":
