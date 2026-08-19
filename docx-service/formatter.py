@@ -190,11 +190,12 @@ def _style_signature(paragraph, doc):
     )
 
 
-def _dominant_body_style(doc, excluded_paragraphs=()):
+def _dominant_body_style(doc, excluded_paragraphs=(), paragraphs=None):
     excluded_ids = {id(paragraph) for paragraph in excluded_paragraphs}
     tally = Counter()
     representative = {}
-    for paragraph in _paragraphs(doc):
+    paragraph_iterable = paragraphs if paragraphs is not None else _paragraphs(doc)
+    for paragraph in paragraph_iterable:
         text = paragraph.text.strip()
         if not text or id(paragraph) in excluded_ids:
             continue
@@ -207,20 +208,21 @@ def _dominant_body_style(doc, excluded_paragraphs=()):
     return signature[0], signature[1], representative[signature]
 
 
-def detect_body_style(doc, filename="<unknown>"):
+def detect_body_style(doc, filename="<unknown>", paragraphs=None):
     """Return the dominant effective body font name and size."""
-    font_name, font_size, _ = _dominant_body_style(doc)
+    font_name, font_size, _ = _dominant_body_style(doc, paragraphs=paragraphs)
     if font_name and font_size:
         return font_name, font_size
     logger.warning("Body fallback used for '%s': no body paragraphs found.", filename)
     return _document_default_value(doc, "name") or "Calibri", Pt(12)
 
 
-def detect_header_style(doc, body_font_name, body_font_size, filename="<unknown>"):
+def detect_header_style(doc, body_font_name, body_font_size, filename="<unknown>", paragraphs=None):
     """Return the dominant full header style and its representative paragraph."""
+    paragraph_iterable = paragraphs if paragraphs is not None else _paragraphs(doc)
     candidates = [
         (paragraph, _header_score(paragraph, doc, body_font_size))
-        for paragraph in _paragraphs(doc)
+        for paragraph in paragraph_iterable
     ]
     candidates = [(paragraph, score) for paragraph, score in candidates if score]
     if not candidates:
@@ -275,11 +277,12 @@ def _apply_fallback_run_style(run, font_name, font_size, bold):
     run.font.bold = bold
 
 
-def _local_body_spacing(doc, excluded_paragraphs=(), count=5):
+def _local_body_spacing(doc, excluded_paragraphs=(), count=5, paragraphs=None):
     """Return the most common spacing tuple from the last N body paragraphs."""
     excluded_ids = {id(paragraph) for paragraph in excluded_paragraphs}
+    paragraph_iterable = paragraphs if paragraphs is not None else _paragraphs(doc)
     body_paras = [
-        paragraph for paragraph in _paragraphs(doc)
+        paragraph for paragraph in paragraph_iterable
         if paragraph.text.strip() and id(paragraph) not in excluded_ids
     ]
     tail = body_paras[-count:] if len(body_paras) > count else body_paras
@@ -291,11 +294,12 @@ def _local_body_spacing(doc, excluded_paragraphs=(), count=5):
     return tally.most_common(1)[0][0]
 
 
-def _local_body_formatting(doc, excluded_paragraphs=(), count=5):
+def _local_body_formatting(doc, excluded_paragraphs=(), count=5, paragraphs=None):
     """Return the most common (alignment, indentation) from the last N body paragraphs."""
     excluded_ids = {id(paragraph) for paragraph in excluded_paragraphs}
+    paragraph_iterable = paragraphs if paragraphs is not None else _paragraphs(doc)
     body_paras = [
-        paragraph for paragraph in _paragraphs(doc)
+        paragraph for paragraph in paragraph_iterable
         if paragraph.text.strip() and id(paragraph) not in excluded_ids
     ]
     tail = body_paras[-count:] if len(body_paras) > count else body_paras
@@ -355,18 +359,27 @@ def _strip_numbering(pPr):
 def insert_core_competencies(docx_bytes, bullet_lines, filename="<unknown>"):
     """Append a formatting-matched Core Competencies section to a .docx file."""
     doc = Document(io.BytesIO(docx_bytes))
+    paragraphs = list(_paragraphs(doc))
 
-    initial_body_name, initial_body_size = detect_body_style(doc, filename)
-    header_style = detect_header_style(doc, initial_body_name, initial_body_size, filename)
+    initial_body_name, initial_body_size = detect_body_style(doc, filename, paragraphs)
+    header_style = detect_header_style(doc, initial_body_name, initial_body_size, filename, paragraphs)
     header_paragraph = header_style["paragraph"]
-    _, _, body_paragraph = _dominant_body_style(doc, [header_paragraph] if header_paragraph else [])
-    body_font_name, body_font_size = detect_body_style(doc, filename)
+    _, _, body_paragraph = _dominant_body_style(
+        doc,
+        [header_paragraph] if header_paragraph else [],
+        paragraphs,
+    )
+    body_font_name, body_font_size = initial_body_name, initial_body_size
     if body_paragraph:
         body_font_name, body_font_size = _style_signature(body_paragraph, doc)[:2]
 
     # Detect spacing, alignment, and indentation from the paragraphs closest to the insertion point.
-    body_spacing = _local_body_spacing(doc, [header_paragraph] if header_paragraph else ())
-    body_alignment, body_indentation = _local_body_formatting(doc, [header_paragraph] if header_paragraph else ())
+    body_spacing = _local_body_spacing(doc, [header_paragraph] if header_paragraph else (), paragraphs=paragraphs)
+    body_alignment, body_indentation = _local_body_formatting(
+        doc,
+        [header_paragraph] if header_paragraph else (),
+        paragraphs=paragraphs,
+    )
     header_spacing = _paragraph_spacing(header_paragraph) if header_paragraph else None
     header_alignment = _paragraph_alignment(header_paragraph) if header_paragraph else None
     header_indentation = _paragraph_indentation(header_paragraph) if header_paragraph else None

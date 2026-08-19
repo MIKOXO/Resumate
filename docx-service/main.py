@@ -1,4 +1,5 @@
 from fastapi import FastAPI, File, Form, UploadFile
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import Response, JSONResponse
 
 import converter
@@ -18,8 +19,11 @@ async def generate_section(
     try:
         docx_bytes = await file.read()
         bullet_lines = [line for line in text.splitlines() if line.strip()]
-        result_bytes = formatter.insert_core_competencies(
-            docx_bytes, bullet_lines, filename=file.filename or "<unknown>"
+        result_bytes = await run_in_threadpool(
+            formatter.insert_core_competencies,
+            docx_bytes,
+            bullet_lines,
+            file.filename or "<unknown>",
         )
         return Response(content=result_bytes, media_type=DOCX_MIME)
     except Exception as exc:
@@ -38,7 +42,7 @@ async def convert_to_pdf(
 ):
     try:
         docx_bytes = await file.read()
-        pdf_bytes = converter.convert_to_pdf(docx_bytes)
+        pdf_bytes = await run_in_threadpool(converter.convert_to_pdf, docx_bytes)
         filename = naming.build_filename(prospect_name, company_name, date)
         return Response(
             content=pdf_bytes,
