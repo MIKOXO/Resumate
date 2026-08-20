@@ -17,13 +17,30 @@
 | Backend auth           | JWT + bcryptjs                    | Session tokens, password hashing                                      |
 | Backend auth transport | httpOnly cookie (`cookie-parser`) | JWT stored in an httpOnly, secure cookie — never exposed to client JS |
 | Backend rate limiting  | `express-rate-limit`              | Throttles auth endpoints against brute-force attempts                 |
-| Email                  | Nodemailer (Gmail SMTP)           | Verification codes, password reset codes                              |
+| Email                  | Brevo HTTP API                     | Verification codes, password reset codes                              |
 | Document service       | Python (FastAPI)                  | docx formatting + section insertion                                   |
 | Document library       | python-docx                       | Read/write docx structure and styles                                  |
 | PDF conversion         | LibreOffice (headless)            | docx → PDF conversion                                                 |
 | AI generation          | Groq API                          | Core Competencies text generation                                     |
 | File storage           | Backblaze B2                      | Stores prospect resume .docx files                                    |
 | Database               | MongoDB Atlas (M0)                | Users, prospect metadata, file references                             |
+
+## Deployment
+
+| Service          | Platform | URL                                        | Notes                                     |
+| ---------------- | -------- | ------------------------------------------ | ----------------------------------------- |
+| Frontend         | Vercel   | https://resumate-lake.vercel.app           | Static build, env var `VITE_API_BASE_URL` |
+| Backend API      | Render   | https://resumate-1-i969.onrender.com       | Node.js web service                       |
+| Python docx- svc | Render   | https://resumate-6t5m.onrender.com         | Docker (Python + LibreOffice)             |
+| Database         | MongoDB Atlas | M0 free tier                          | Whitelist `0.0.0.0/0` for Render access   |
+| File storage     | Backblaze B2  | S3-compatible API                     | Free tier, 10GB                           |
+| Email            | Brevo    | HTTP API (port 443)                        | 300 emails/day free, IP-restricted        |
+
+- Frontend Axios services use `VITE_API_BASE_URL` env var (falls back to `/api` proxy in local dev).
+- Backend cookie uses `sameSite: 'none'` + `secure: true` in production for cross-domain auth.
+- Backend enables `trust proxy` for `express-rate-limit` behind Render's reverse proxy.
+- Python service runs via Dockerfile — `python:3.12-slim` + LibreOffice headless + uvicorn.
+- Render free tier: services spin down after 15 min inactivity (~30-60s cold start).
 
 ## System Boundaries (Folder Ownership)
 
@@ -60,9 +77,9 @@ No caching layer in MVP — request volume (15-20/day per user) doesn't justify 
 ## Auth and Access Model
 
 - Self-signup: email + password, password hashed with bcryptjs before storage.
-- On signup, a 6-digit verification code (with a short expiry, e.g. 10 minutes) is generated, stored on the User record, and emailed via Nodemailer. The user cannot log in until `emailVerified` is true.
+- On signup, a 6-digit verification code (with a short expiry, e.g. 10 minutes) is generated, stored on the User record, and emailed via Brevo API. The user cannot log in until `emailVerified` is true.
 - Forgot password follows the same code pattern: a 6-digit reset code is generated, stored with an expiry, and emailed. Submitting the correct code allows setting a new password. Codes are single-use — cleared from the User record once consumed.
-- On login, the JWT is set as an **httpOnly, secure, sameSite cookie** — never returned in the JSON response body, never stored in localStorage/Redux. This protects the token from being read by injected client-side scripts (XSS).
+- On login, the JWT is set as an **httpOnly, secure cookie** — never returned in the JSON response body, never stored in localStorage/Redux. In production (cross-domain), `sameSite: 'none'` allows the cookie on requests from Vercel to Render. In local dev, `sameSite: 'lax'` is used.
 - The frontend never holds the raw token. `authSlice` tracks only `isAuthenticated` and the current user's non-sensitive info (name, email), hydrated via a `GET /api/auth/me` call on app load (reads the cookie server-side, returns user info if valid).
 - Every request that needs auth relies on the browser automatically attaching the cookie — Axios must be configured with `withCredentials: true`, and CORS must allow `credentials: true` with an explicit client origin (not `*`).
 - `authMiddleware` reads the JWT from the cookie (via `cookie-parser`), not from an `Authorization` header.

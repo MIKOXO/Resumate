@@ -16,7 +16,7 @@ Resumate is a web-based dashboard that automates the resume update step of a job
 ## Core User Flow
 
 1. User signs up with email/password.
-2. System sends a 6-digit verification code to the user's email (Nodemailer + Gmail SMTP).
+2. System sends a 6-digit verification code to the user's email (Brevo HTTP API).
 3. User enters the code to verify their account; login is blocked until verified.
 4. User logs in.
 5. User adds a Job Applying Team member (e.g. "John") — the colleague whose assigned prospects will be organized under them.
@@ -36,7 +36,7 @@ Resumate is a web-based dashboard that automates the resume update step of a job
 **Auth**
 
 - Self-signup with email/password
-- Email verification via 6-digit code (Nodemailer + Gmail SMTP), required before login
+- Email verification via 6-digit code (Brevo HTTP API), required before login
 - Resend verification code
 - Forgot password: request a reset code by email, enter code + new password to reset
 - Login with JWT session
@@ -78,7 +78,7 @@ Resumate is a web-based dashboard that automates the resume update step of a job
 ## In Scope
 
 - Self-signup and login (JWT-based)
-- Uploading and storing prospect resumes as reusable templates (Cloudflare R2 + MongoDB Atlas)
+- Uploading and storing prospect resumes as reusable templates (Backblaze B2 + MongoDB Atlas)
 - Manual paste of job description text
 - AI-generated Core Competencies section (Groq API)
 - Automated formatting-matched insertion into the resume (Python/python-docx)

@@ -4,7 +4,7 @@
 
 - Keep modules small and single-purpose — a file that does upload, formatting, and naming should be three files, not one.
 - Fix root causes, not symptoms — do not patch a formatting bug with a special-case `if`; fix the underlying detection logic.
-- Do not mix unrelated concerns in one component, controller, or service — a controller parses/validates/responds, it does not also talk to R2.
+- Do not mix unrelated concerns in one component, controller, or service — a controller parses/validates/responds, it does not also talk to B2.
 - No dead code, commented-out blocks, or TODO-and-forget — either it's used, removed, or tracked in `progress-tracker.md`.
 - Every async operation (API calls, file I/O, docx/PDF processing) must have explicit error handling — no silent failures.
 
@@ -43,7 +43,7 @@
 ## Data and Storage
 
 - Metadata (users, prospect records, file references, timestamps) belongs in MongoDB Atlas — nothing else.
-- Resume files (.docx) belong in Cloudflare R2 — never stored as binary/base64 in MongoDB.
+- Resume files (.docx) belong in Backblaze B2 — never stored as binary/base64 in MongoDB.
 - Job description text and generated PDFs are not persisted anywhere — processed in-memory/temp storage per request, then discarded.
 - Any temp files written during docx/PDF processing (client uploads, LibreOffice output) must be cleaned up after the request completes, success or failure.
 
@@ -59,5 +59,5 @@
 - `server/src/services/` — all business logic: B2, Groq, Python service, auth, team members, prospects
 - `server/src/models/` — MongoDB schemas only (User, TeamMember, Prospect)
 - `server/src/middleware/` — auth verification, centralized error handling
-- `server/src/config/` — DB connection, R2 client config
+- `server/src/config/` — DB connection, B2 client config
 - `docx-service/` — all docx manipulation and PDF conversion logic (Python), isolated from Express

@@ -30,6 +30,7 @@ Update this file after every meaningful implementation change.
 - Feature 16: Generate Workspace — Popover/Calendar shadcn scaffolds, react-day-picker v10, DatePicker, generateService, generationSlice, useGeneration, GenerateWorkspace, ResultCard, Dashboard wired. `selectProspect` now carries `teamMemberId`. Build + lint clean.
 - Feature 17: Settings page — `updateName`/`changePassword` in authService/slice/hook (separate `nameLoading`/`nameError`/`passwordLoading`/`passwordError` keys), `/settings` route behind `AuthGate`, two AuthCard-style stacked forms (name+read-only email, password), transient "Saved" confirmations, backend error messages surfaced verbatim. Build + lint clean.
 - Post-17: Per-prospect result cache — `generationSlice` now holds `results: { [prospectId]: { blob, filename } }` + `operatingProspectId` instead of a single result; switching prospects no longer wipes a finished download (re-select → Download reappears, no re-generate). `clearProspectResult` action + X button on `ResultCard` to dismiss a download. `logout` clears the cache. Form fields (JD/company/date) unaffected. Build + lint clean. NOTE: this intentionally changes Feature 16 spec's documented behavior (specs left untouched per request).
+- Deployment: Production deploy — Vercel (frontend), Render (backend + Python docx-service via Docker), Brevo HTTP API (email), MongoDB Atlas, Backblaze B2. Root `.gitignore` added. `VITE_API_BASE_URL` env var for frontend. `trust proxy` + `sameSite: 'none'` cookie for cross-domain auth. `Content-Disposition` exposed via CORS for PDF download naming.
 
 ## In Progress
 
@@ -46,10 +47,12 @@ Update this file after every meaningful implementation change.
 ## Architecture Decisions
 
 - File storage via B2 S3-compatible API (AWS SDK v3).
-- Auth via httpOnly JWT cookie — never exposed to JS.
+- Auth via httpOnly JWT cookie — never exposed to JS. `sameSite: 'none'` in production for cross-domain.
 - Password hashing in authService (models stay thin).
 - Verification codes: single-use, 10-min expiry, cleared on verify.
 - Reset codes: same pattern as verification; no session invalidation on reset (accepted MVP limit).
+- Email via Brevo HTTP API — Render blocks outbound SMTP on all ports.
+- Deployment: Vercel (frontend), Render (backend + Python Docker), Brevo (email).
 
 ## Session Notes
 

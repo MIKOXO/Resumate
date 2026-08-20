@@ -19,7 +19,7 @@ These are rules, not guidelines. Follow them exactly while building this project
 ## When to Split Work
 
 - Split a task into smaller steps if it would require touching more than one layer (e.g. a route, a service, and a frontend component). Build and verify the backend first, then the frontend.
-- Split a task if it mixes two unrelated concerns (e.g. "add auth and set up R2 upload"). Treat these as two units, not one.
+- Split a task if it mixes two unrelated concerns (e.g. "add auth and set up B2 upload"). Treat these as two units, not one.
 - Split a task if it's large enough that partial failure would be hard to diagnose (e.g. "build the whole generate flow"). Break it into: JD input → Groq call → docx insertion → PDF conversion → download. Verify each step independently.
 - Always treat client and server work as separate units. Do them in sequence, and verify each before starting the next. Never build both simultaneously in one pass.
 
