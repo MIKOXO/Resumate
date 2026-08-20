@@ -11,6 +11,11 @@ app = FastAPI()
 DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 
 
+@app.get("/")
+async def health():
+    return {"status": "ok"}
+
+
 @app.post("/generate-section")
 async def generate_section(
     file: UploadFile = File(...),
