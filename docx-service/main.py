@@ -12,6 +12,7 @@ DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.docu
 
 
 @app.get("/")
+@app.head("/")
 async def health():
     return {"status": "ok"}
 
