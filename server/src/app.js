@@ -18,7 +18,11 @@ const port = process.env.PORT || 5000;
 app.set('trust proxy', 1);
 
 // Middleware
-app.use(cors({ origin: process.env.CLIENT_ORIGIN, credentials: true }));
+app.use(cors({
+  origin: process.env.CLIENT_ORIGIN,
+  credentials: true,
+  exposedHeaders: ['Content-Disposition'],
+}));
 app.use(express.json());
 app.use(cookieParser());
 
