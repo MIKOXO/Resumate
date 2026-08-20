@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { Download, X } from 'lucide-react'
-import { primaryBtn } from '@/lib/authUiHelpers'
+import { compactControlRadius, primaryBtn } from '@/lib/authUiHelpers'
 import { cn } from '@/lib/utils'
 
 const CARD_ANIM = {
@@ -42,7 +42,7 @@ const ResultCard = ({ filename, blob, onClear }) => {
             type="button"
             onClick={onClear}
             aria-label="Dismiss download"
-            className="cursor-pointer rounded-md p-1.5 text-muted transition-colors outline-none hover:bg-elevated hover:text-primary focus-visible:ring-2 focus-visible:ring-accent-primary/40"
+            className={`cursor-pointer ${compactControlRadius} p-1.5 text-muted transition-colors outline-none hover:bg-elevated hover:text-primary focus-visible:ring-2 focus-visible:ring-accent-primary/40`}
           >
             <X className="h-4 w-4" />
           </button>

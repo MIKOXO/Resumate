@@ -81,7 +81,7 @@ const AddProspectDialog = ({ open, onOpenChange, teamMemberId }) => {
               type="file"
               accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
               onChange={handleFileChange}
-              className="block w-full text-sm text-muted file:mr-3 file:cursor-pointer file:rounded-md file:border file:border-strong file:bg-elevated file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary file:transition-colors hover:file:border-default"
+              className="block w-full text-sm text-muted file:mr-3 file:cursor-pointer file:rounded-[6px] file:border file:border-strong file:bg-elevated file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary file:transition-colors hover:file:border-default"
             />
             <FieldError message={fileError} show={!!fileError} />
           </div>

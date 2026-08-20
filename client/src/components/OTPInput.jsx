@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion } from 'framer-motion'
+import { compactControlRadius } from '@/lib/authUiHelpers'
 
 const EXPIRY_SECONDS = 600  // 10 minutes
 const RESEND_COOLDOWN = 60
@@ -110,7 +111,7 @@ const OTPInput = ({ onComplete, onResend, resendLoading }) => {
             onKeyDown={(e) => handleKeyDown(i, e)}
             onPaste={handlePaste}
             whileFocus={{ scale: 1.05 }}
-            className="h-10 w-full min-w-0 rounded-md border border-strong bg-elevated text-center text-sm text-primary outline-none focus:border-accent-primary transition-colors"
+            className={`h-10 w-full min-w-0 ${compactControlRadius} border border-strong bg-elevated text-center text-sm text-primary outline-none focus:border-accent-primary transition-colors`}
           />
         ))}
       </div>

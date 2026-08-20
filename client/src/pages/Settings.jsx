@@ -8,7 +8,7 @@ import useAutoDismiss from '@/hooks/useAutoDismiss'
 import PasswordInput from '@/components/PasswordInput'
 import PasswordStrengthBar from '@/components/PasswordStrengthBar'
 import { BlockError, FieldError, Spinner } from '@/components/authUi'
-import { inputClass, primaryBtn, destructiveBtn } from '@/lib/authUiHelpers'
+import { compactControlRadius, destructiveBtn, inputClass, primaryBtn } from '@/lib/authUiHelpers'
 import { getPasswordStrength } from '@/lib/passwordStrength'
 import DeleteConfirmDialog from '@/components/DeleteConfirmDialog'
 import Logo from '@/components/Logo'
@@ -283,14 +283,14 @@ const Settings = () => {
                   aria-controls={`settings-panel-${id}`}
                   onClick={() => setTab(id)}
                   className={cn(
-                    'relative cursor-pointer rounded-sm py-1.5 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/40',
+                    `relative cursor-pointer ${compactControlRadius} py-1.5 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/40`,
                     active ? 'text-primary' : 'text-muted hover:text-primary',
                   )}
                 >
                   {active && (
                     <motion.span
                       layoutId="settings-tab-pill"
-                      className="absolute inset-0 rounded-sm bg-elevated"
+                      className={`absolute inset-0 ${compactControlRadius} bg-elevated`}
                       transition={{ type: 'spring', stiffness: 400, damping: 32 }}
                     />
                   )}

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { compactControlRadius } from '@/lib/authUiHelpers'
 
 /**
  * @param {object} props
@@ -23,7 +24,7 @@ const PasswordInput = ({ value, onChange, placeholder = 'Password', className, h
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className={cn(
-          'w-full rounded-md border bg-elevated px-3 py-2 pr-9 text-sm text-primary placeholder:text-disabled outline-none transition-colors',
+          `w-full ${compactControlRadius} border bg-elevated px-3 py-2 pr-9 text-sm text-primary placeholder:text-disabled outline-none transition-colors`,
           hasError ? 'border-state-error' : 'border-strong focus:border-accent-primary',
           className,
         )}

@@ -6,7 +6,7 @@ import ResultCard from '@/components/ResultCard'
 import { Spinner } from '@/components/authUi'
 import useAutoDismiss from '@/hooks/useAutoDismiss'
 import { Skeleton } from '@/components/ui/skeleton'
-import { inputClass, primaryBtn } from '@/lib/authUiHelpers'
+import { actionButtonRadius, inputClass, primaryBtn } from '@/lib/authUiHelpers'
 import { cn } from '@/lib/utils'
 
 const GenerateWorkspace = () => {
@@ -94,7 +94,7 @@ const GenerateWorkspace = () => {
             onClick={handleClear}
             disabled={!hasAnyField || isGenerating}
             className={cn(
-              'w-full rounded-lg border border-default px-4 py-2 text-sm font-medium transition-colors sm:w-auto',
+              `w-full ${actionButtonRadius} border border-default px-4 py-2 text-sm font-medium transition-colors sm:w-auto`,
               hasAnyField && !isGenerating
                 ? 'text-muted hover:text-primary hover:bg-surface cursor-pointer'
                 : 'cursor-not-allowed text-disabled',

@@ -11,6 +11,7 @@ import TeamMemberListSkeleton from '@/components/TeamMemberListSkeleton'
 import ReplaceResumeDialog from '@/components/ReplaceResumeDialog'
 import DeleteConfirmDialog from '@/components/DeleteConfirmDialog'
 import { cn } from '@/lib/utils'
+import { compactControlRadius } from '@/lib/authUiHelpers'
 
 const ProspectList = ({ member }) => {
   const { selectedProspectId, selectProspect, deleteProspect } = useTeamMembers()
@@ -50,7 +51,7 @@ const ProspectList = ({ member }) => {
               <button
                 type="button"
                 aria-label={`Actions for ${p.name}`}
-                className="cursor-pointer rounded-md p-1 text-muted transition-colors outline-none hover:bg-surface hover:text-primary focus-visible:ring-2 focus-visible:ring-accent-primary/40"
+                className={`cursor-pointer ${compactControlRadius} p-1 text-muted transition-colors outline-none hover:bg-surface hover:text-primary focus-visible:ring-2 focus-visible:ring-accent-primary/40`}
               >
                 <MoreHorizontal className="size-4" />
               </button>

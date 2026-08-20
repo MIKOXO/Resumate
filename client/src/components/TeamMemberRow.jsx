@@ -12,6 +12,7 @@ import ProspectList from '@/components/ProspectList'
 import AddProspectDialog from '@/components/AddProspectDialog'
 import DeleteConfirmDialog from '@/components/DeleteConfirmDialog'
 import { cn } from '@/lib/utils'
+import { compactControlRadius } from '@/lib/authUiHelpers'
 
 const TeamMemberRow = ({ member }) => {
   const { toggleExpand, deleteTeamMember, fetchProspectsForTeamMember } = useTeamMembers()
@@ -42,7 +43,7 @@ const TeamMemberRow = ({ member }) => {
         <CollapsibleTrigger asChild>
           <button
             type="button"
-            className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-md px-1 py-1.5 text-left transition-colors hover:bg-surface"
+            className={`flex min-w-0 flex-1 cursor-pointer items-center gap-2 ${compactControlRadius} px-1 py-1.5 text-left transition-colors hover:bg-surface`}
           >
             <ChevronRight
               className={cn(
@@ -58,7 +59,7 @@ const TeamMemberRow = ({ member }) => {
             <button
               type="button"
               aria-label={`Actions for ${member.name}`}
-              className="cursor-pointer rounded-md p-1.5 text-muted transition-colors outline-none hover:bg-surface hover:text-primary focus-visible:ring-2 focus-visible:ring-accent-primary/40"
+              className={`cursor-pointer ${compactControlRadius} p-1.5 text-muted transition-colors outline-none hover:bg-surface hover:text-primary focus-visible:ring-2 focus-visible:ring-accent-primary/40`}
             >
               <MoreHorizontal className="size-4" />
             </button>
@@ -78,7 +79,7 @@ const TeamMemberRow = ({ member }) => {
           <button
             type="button"
             onClick={() => setAddOpen(true)}
-            className="mt-1 flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 text-sm text-muted transition-colors hover:bg-surface hover:text-primary"
+            className={`mt-1 flex cursor-pointer items-center gap-1.5 ${compactControlRadius} px-3 py-1.5 text-sm text-muted transition-colors hover:bg-surface hover:text-primary`}
           >
             <Plus className="size-4" />
             Add prospect
