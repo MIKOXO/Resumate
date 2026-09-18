@@ -31,6 +31,7 @@ Update this file after every meaningful implementation change.
 - Feature 17: Settings page — `updateName`/`changePassword` in authService/slice/hook (separate `nameLoading`/`nameError`/`passwordLoading`/`passwordError` keys), `/settings` route behind `AuthGate`, two AuthCard-style stacked forms (name+read-only email, password), transient "Saved" confirmations, backend error messages surfaced verbatim. Build + lint clean.
 - Post-17: Per-prospect result cache — `generationSlice` now holds `results: { [prospectId]: { blob, filename } }` + `operatingProspectId` instead of a single result; switching prospects no longer wipes a finished download (re-select → Download reappears, no re-generate). `clearProspectResult` action + X button on `ResultCard` to dismiss a download. `logout` clears the cache. Form fields (JD/company/date) unaffected. Build + lint clean. NOTE: this intentionally changes Feature 16 spec's documented behavior (specs left untouched per request).
 - Deployment: Production deploy — Vercel (frontend), Render (backend + Python docx-service via Docker), Brevo HTTP API (email), MongoDB Atlas, Backblaze B2. Root `.gitignore` added. `VITE_API_BASE_URL` env var for frontend. `trust proxy` + `sameSite: 'none'` cookie for cross-domain auth. `Content-Disposition` exposed via CORS for PDF download naming.
+- Refactor: Removed TeamMember layer from backend. Deleted TeamMember model/service/controller/routes. Prospect model drops `teamMemberId`; prospects now owned directly by User (`ownerId`). B2 key now `ownerId/prospectId.docx`. Prospect routes remounted at `/api` (`/api/prospects`, `/api/prospects/:prospectId`); generate fields now `prospectId, jobDescription, companyName, date`; `deleteAllProspectsForTeamMember` renamed `deleteAllProspects({ ownerId })`, called directly from `deleteAccount`. Frontend still targets old `/api/team-members/*` paths and sends `teamMemberId` — flagging as follow-up unit.
 
 ## In Progress
 
@@ -64,8 +65,8 @@ Update this file after every meaningful implementation change.
 - Feature 17 post-build: Settings page restructured from two stacked cards into a single card with a segmented Profile/Security tab switcher (motion sliding pill via `layoutId`). Both forms stay mounted so their state survives tab switches. UI-only change; no spec files touched.
 - Feature 17 post-build (2): removed prospect-count badge from team member rows; replaced team member delete icon and prospect replace/delete icons with the navbar's DropdownMenu pattern — a single 3-dot (MoreVertical) menu per row (`Delete` destructive on team members; `Replace resume` + `Delete` on prospects). Existing dialog logic untouched.
 
-## Refactor: Remove Team Member Layer (Planned)
+## Refactor: Remove Team Member Layer
 
-**Reason:** Workflow changed. Each employee now owns their own account and works directly with their assigned prospect(s) — no team member grouping needed. The `TeamMember` model and everything built around it is being removed. Prospect ownership moves up one level: directly under `User`.
+**Reason:** Workflow changed. Each employee now owns their own account and works directly with their assigned prospect(s) — no team member grouping needed. The `TeamMember` model and everything built around it has been removed from the backend. Prospect ownership moved up one level: directly under `User`.
 
-**Scope:** See `feature-specs/19-remove-team-member.md` for full plan.
+**Status:** Backend done. Frontend still sends `teamMemberId` and hits `/api/team-members/*` — needs a matching refactor unit (client services, slices, components) before deploy.

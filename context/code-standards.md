@@ -56,8 +56,8 @@
 - `client/src/hooks/` — reusable selector/dispatch wrappers per slice
 - `server/src/routes/` — endpoint definitions only
 - `server/src/controllers/` — request parsing, validation, response shaping
-- `server/src/services/` — all business logic: B2, Groq, Python service, auth, team members, prospects
-- `server/src/models/` — MongoDB schemas only (User, TeamMember, Prospect)
+- `server/src/services/` — all business logic: B2, Groq, Python service, auth, prospects
+- `server/src/models/` — MongoDB schemas only (User, Prospect)
 - `server/src/middleware/` — auth verification, centralized error handling
 - `server/src/config/` — DB connection, B2 client config
 - `docx-service/` — all docx manipulation and PDF conversion logic (Python), isolated from Express
