@@ -6,7 +6,7 @@ const api = axios.create({
 })
 
 /**
- * @param {{ teamMemberId: string, prospectId: string, jobDescription: string, companyName: string, date: string }} params
+ * @param {{ prospectId: string, jobDescription: string, companyName: string, date: string }} params
  */
 const generate = (params) =>
   api.post('/', params, { responseType: 'blob' })

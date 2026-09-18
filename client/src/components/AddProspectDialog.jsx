@@ -8,14 +8,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { useTeamMembers } from '@/hooks/useTeamMembers'
+import { useProspects } from '@/hooks/useProspects'
 import { validateProspectFile } from '@/lib/prospectFile'
 import { BlockError, FieldError, Spinner } from '@/components/authUi'
 import { inputClass, outlineBtn, primaryBtn } from '@/lib/authUiHelpers'
 import { cn } from '@/lib/utils'
 
-const AddProspectDialog = ({ open, onOpenChange, teamMemberId }) => {
-  const { uploadProspect, error, clearError } = useTeamMembers()
+const AddProspectDialog = ({ open, onOpenChange }) => {
+  const { uploadProspect, error, clearError } = useProspects()
   const [name, setName] = useState('')
   const [file, setFile] = useState(null)
   const [fileError, setFileError] = useState('')
@@ -46,7 +46,7 @@ const AddProspectDialog = ({ open, onOpenChange, teamMemberId }) => {
     if (!valid || submitting) return
     clearError()
     setSubmitting(true)
-    const result = await uploadProspect(teamMemberId, name.trim(), file)
+    const result = await uploadProspect(name.trim(), file)
     setSubmitting(false)
     if (result.meta?.requestStatus === 'fulfilled') {
       handleOpenChange(false)

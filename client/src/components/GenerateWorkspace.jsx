@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useTeamMembers } from '@/hooks/useTeamMembers'
+import { useProspects } from '@/hooks/useProspects'
 import { useGeneration } from '@/hooks/useGeneration'
 import DatePicker from '@/components/DatePicker'
 import ResultCard from '@/components/ResultCard'
@@ -10,16 +10,14 @@ import { actionButtonRadius, inputClass, primaryBtn } from '@/lib/authUiHelpers'
 import { cn } from '@/lib/utils'
 
 const GenerateWorkspace = () => {
-  const { list, selectedProspectId, selectedTeamMemberId } = useTeamMembers()
+  const { list, selectedProspectId } = useProspects()
   const { status, error, operatingProspectId, results, generate, clearResult } = useGeneration()
 
   const [jobDescription, setJobDescription] = useState('')
   const [companyName, setCompanyName] = useState('')
   const [date, setDate] = useState(null)
 
-  const prospect = list
-    .flatMap((tm) => tm.prospects)
-    .find((p) => p._id === selectedProspectId)
+  const prospect = list.find((p) => p._id === selectedProspectId)
 
   // Operation state (status/error) belongs to the prospect that triggered it;
   // finished results are keyed by prospectId and persist across switches.
@@ -41,7 +39,6 @@ const GenerateWorkspace = () => {
   const handleGenerate = () => {
     if (!canGenerate) return
     generate({
-      teamMemberId: selectedTeamMemberId,
       prospectId: selectedProspectId,
       jobDescription: jobDescription.trim(),
       companyName: companyName.trim(),

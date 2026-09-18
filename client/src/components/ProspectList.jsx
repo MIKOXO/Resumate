@@ -6,29 +6,20 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { useTeamMembers } from '@/hooks/useTeamMembers'
-import TeamMemberListSkeleton from '@/components/TeamMemberListSkeleton'
+import { useProspects } from '@/hooks/useProspects'
 import ReplaceResumeDialog from '@/components/ReplaceResumeDialog'
 import DeleteConfirmDialog from '@/components/DeleteConfirmDialog'
 import { cn } from '@/lib/utils'
 import { compactControlRadius } from '@/lib/authUiHelpers'
 
-const ProspectList = ({ member }) => {
-  const { selectedProspectId, selectProspect, deleteProspect } = useTeamMembers()
+const ProspectList = () => {
+  const { list, selectedProspectId, selectProspect, deleteProspect } = useProspects()
   const [replaceFor, setReplaceFor] = useState(null)
   const [deleteFor, setDeleteFor] = useState(null)
 
-  if (!member.prospectsLoaded) {
-    return <TeamMemberListSkeleton rows={3} className="p-1" />
-  }
-
-  if (member.prospects.length === 0) {
-    return <p className="px-2 py-1.5 text-xs text-muted">No prospects yet.</p>
-  }
-
   return (
     <div className="space-y-0.5">
-      {member.prospects.map((p) => (
+      {list.map((p) => (
         <div
           key={p._id}
           className={cn(
@@ -40,7 +31,7 @@ const ProspectList = ({ member }) => {
         >
           <button
             type="button"
-            onClick={() => selectProspect(p._id, member._id)}
+            onClick={() => selectProspect(p._id)}
             className="min-w-0 flex-1 cursor-pointer truncate text-left text-sm text-primary"
             title={p.name}
           >
@@ -74,7 +65,6 @@ const ProspectList = ({ member }) => {
         <ReplaceResumeDialog
           open={!!replaceFor}
           onOpenChange={(o) => { if (!o) setReplaceFor(null) }}
-          teamMemberId={member._id}
           prospect={replaceFor}
         />
       )}
@@ -86,7 +76,7 @@ const ProspectList = ({ member }) => {
           title={`Delete ${deleteFor.name}?`}
           description={`This will permanently delete ${deleteFor.name} and its resume. This cannot be undone.`}
           confirmLabel="Delete"
-          onConfirm={() => deleteProspect(member._id, deleteFor._id)}
+          onConfirm={() => deleteProspect(deleteFor._id)}
         />
       )}
     </div>

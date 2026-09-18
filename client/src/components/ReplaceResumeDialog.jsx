@@ -8,14 +8,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { useTeamMembers } from '@/hooks/useTeamMembers'
+import { useProspects } from '@/hooks/useProspects'
 import { validateProspectFile } from '@/lib/prospectFile'
 import { BlockError, FieldError, Spinner } from '@/components/authUi'
 import { outlineBtn, primaryBtn } from '@/lib/authUiHelpers'
 import { cn } from '@/lib/utils'
 
-const ReplaceResumeDialog = ({ open, onOpenChange, teamMemberId, prospect }) => {
-  const { replaceProspectResume, error, clearError } = useTeamMembers()
+const ReplaceResumeDialog = ({ open, onOpenChange, prospect }) => {
+  const { replaceProspectResume, error, clearError } = useProspects()
   const [file, setFile] = useState(null)
   const [fileError, setFileError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -44,7 +44,7 @@ const ReplaceResumeDialog = ({ open, onOpenChange, teamMemberId, prospect }) => 
     if (!valid || submitting) return
     clearError()
     setSubmitting(true)
-    const result = await replaceProspectResume(teamMemberId, prospect._id, file)
+    const result = await replaceProspectResume(prospect._id, file)
     setSubmitting(false)
     if (result.meta?.requestStatus === 'fulfilled') {
       handleOpenChange(false)

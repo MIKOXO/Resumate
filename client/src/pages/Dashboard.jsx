@@ -5,9 +5,9 @@ import { motion } from 'framer-motion'
 import { FileText } from 'lucide-react'
 import TopBar from '@/components/TopBar'
 import EmptyState from '@/components/EmptyState'
-import TeamMemberTree from '@/components/TeamMemberTree'
+import ProspectPanel from '@/components/ProspectPanel'
 import GenerateWorkspace from '@/components/GenerateWorkspace'
-import { clearSelectedProspect, fetchTeamMembers } from '@/store/slices/teamMembersSlice'
+import { clearSelectedProspect, fetchProspects } from '@/store/slices/prospectsSlice'
 import { clearGenerationState } from '@/store/slices/generationSlice'
 
 const SHELL_ANIM = {
@@ -18,10 +18,10 @@ const SHELL_ANIM = {
 
 const Dashboard = () => {
   const dispatch = useDispatch()
-  const selectedProspectId = useSelector((s) => s.teamMembers.selectedProspectId)
+  const selectedProspectId = useSelector((s) => s.prospects.selectedProspectId)
 
   useEffect(() => {
-    dispatch(fetchTeamMembers())
+    dispatch(fetchProspects())
     return () => {
       dispatch(clearSelectedProspect())
       dispatch(clearGenerationState())
@@ -33,7 +33,7 @@ const Dashboard = () => {
       <TopBar />
       <div className="flex min-h-0 flex-1 flex-col md:flex-row md:overflow-hidden">
         <aside className="flex min-h-0 flex-1 flex-col border-b border-default bg-base md:w-[260px] md:flex-none md:border-b-0 md:border-r">
-          <TeamMemberTree />
+          <ProspectPanel />
         </aside>
         <main className="flex min-w-0 flex-1 flex-col overflow-y-auto bg-base">
           {selectedProspectId
