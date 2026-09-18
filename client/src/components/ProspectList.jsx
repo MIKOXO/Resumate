@@ -23,7 +23,7 @@ const ProspectList = () => {
         <div
           key={p._id}
           className={cn(
-            'group flex items-center gap-1 rounded-md border px-2 py-1.5 transition-colors',
+            'group mx-3 flex items-center gap-1 rounded-md border px-2 py-1.5 transition-colors',
             selectedProspectId === p._id
               ? 'border-default bg-surface'
               : 'border-transparent hover:bg-surface',
@@ -33,7 +33,6 @@ const ProspectList = () => {
             type="button"
             onClick={() => selectProspect(p._id)}
             className="min-w-0 flex-1 cursor-pointer truncate text-left text-sm text-primary"
-            title={p.name}
           >
             {p.name}
           </button>
