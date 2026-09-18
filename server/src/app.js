@@ -9,7 +9,6 @@ import { errorHandler } from './middleware/errorHandler.js';
 import authRoutes from './routes/authRoutes.js';
 import generateRoutes from './routes/generateRoutes.js';
 import prospectRoutes from './routes/prospectRoutes.js';
-import teamMemberRoutes from './routes/teamMemberRoutes.js';
 
 // Initialize Express app
 const app = express();
@@ -32,8 +31,7 @@ app.get('/api/health', (req, res) => {
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/team-members', teamMemberRoutes);
-app.use('/api/team-members', prospectRoutes);
+app.use('/api', prospectRoutes);
 app.use('/api/generate', generateRoutes);
 
 // Error handling middleware

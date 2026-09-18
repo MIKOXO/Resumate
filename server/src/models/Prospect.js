@@ -8,12 +8,6 @@ const prospectSchema = new mongoose.Schema({
     required: true,
     index: true,
   },
-  teamMemberId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'TeamMember',
-    required: true,
-    index: true,
-  },
   b2Key: { type: String, required: true },
   uploadedAt: { type: Date, default: Date.now },
   createdAt: { type: Date, default: Date.now },

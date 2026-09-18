@@ -2,10 +2,9 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 import User from '../models/User.js';
-import Prospect from '../models/Prospect.js';
-import TeamMember from '../models/TeamMember.js';
 import { sendEmail } from './emailService.js';
 import { buildEmailHtml, codeBlock } from './emailTemplate.js';
+import { deleteAllProspects } from './prospectService.js';
 
 const SAFE_FIELDS = '_id name email emailVerified createdAt';
 
@@ -437,15 +436,7 @@ export const deleteAccount = async ({ userId, password }) => {
     throw err;
   }
 
-  const { deleteAllProspectsForTeamMember } = await import('./prospectService.js');
-
-  const teamMembers = await TeamMember.find({ ownerId: userId });
-  await Promise.all(
-    teamMembers.map(async (tm) => {
-      await deleteAllProspectsForTeamMember({ ownerId: userId, teamMemberId: tm._id });
-      await TeamMember.deleteOne({ _id: tm._id });
-    })
-  );
+  await deleteAllProspects({ ownerId: userId });
 
   await User.deleteOne({ _id: userId });
 

@@ -23,19 +23,13 @@ export const uploadSingle = uploadMiddleware.single('file');
 export const upload = async (req, res, next) => {
   try {
     const { name } = req.body;
-    const { teamMemberId } = req.params;
 
     if (!name || typeof name !== 'string' || !name.trim()) {
       return res.status(400).json({ success: false, error: 'Prospect name is required.' });
     }
 
-    if (!teamMemberId) {
-      return res.status(400).json({ success: false, error: 'Team member id is required.' });
-    }
-
     const prospect = await prospectService.uploadProspect({
       ownerId: req.user,
-      teamMemberId,
       name: name.trim(),
       file: req.file,
     });
@@ -47,11 +41,7 @@ export const upload = async (req, res, next) => {
 
 export const list = async (req, res, next) => {
   try {
-    const { teamMemberId } = req.params;
-    const prospects = await prospectService.listProspects({
-      ownerId: req.user,
-      teamMemberId,
-    });
+    const prospects = await prospectService.listProspects({ ownerId: req.user });
     res.json({ success: true, data: prospects });
   } catch (err) {
     next(err);
@@ -60,10 +50,9 @@ export const list = async (req, res, next) => {
 
 export const replace = async (req, res, next) => {
   try {
-    const { teamMemberId, prospectId } = req.params;
+    const { prospectId } = req.params;
     const prospect = await prospectService.replaceProspectResume({
       ownerId: req.user,
-      teamMemberId,
       prospectId,
       file: req.file,
     });
@@ -75,8 +64,8 @@ export const replace = async (req, res, next) => {
 
 export const remove = async (req, res, next) => {
   try {
-    const { teamMemberId, prospectId } = req.params;
-    await prospectService.deleteProspect({ ownerId: req.user, teamMemberId, prospectId });
+    const { prospectId } = req.params;
+    await prospectService.deleteProspect({ ownerId: req.user, prospectId });
     res.json({ success: true, data: null });
   } catch (err) {
     next(err);

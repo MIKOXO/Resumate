@@ -20,12 +20,11 @@ const makeError = (message, status) => {
 };
 
 /**
- * @param {{ ownerId: string, teamMemberId: string, prospectId: string, jobDescription: string, companyName: string, date: string }} params
+ * @param {{ ownerId: string, prospectId: string, jobDescription: string, companyName: string, date: string }} params
  * @returns {Promise<{ pdfBuffer: Buffer, contentDisposition: string }>}
  */
 export const generateResume = async ({
   ownerId,
-  teamMemberId,
   prospectId,
   jobDescription,
   companyName,
@@ -35,7 +34,7 @@ export const generateResume = async ({
 
   const chain = async () => {
     // Step 1: confirm prospect ownership
-    const prospect = await Prospect.findOne({ _id: prospectId, ownerId, teamMemberId });
+    const prospect = await Prospect.findOne({ _id: prospectId, ownerId });
     if (!prospect) throw makeError('Prospect not found.', 404);
 
     // Step 2: download docx from B2

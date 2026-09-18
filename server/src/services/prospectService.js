@@ -3,7 +3,6 @@ import { DeleteObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 
 import b2Client from '../config/b2.js';
 import Prospect from '../models/Prospect.js';
-import { getOwnedTeamMember } from './teamMemberService.js';
 
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 const B2_BUCKET = process.env.B2_BUCKET_NAME;
@@ -23,21 +22,20 @@ const assertDocx = (file) => {
 };
 
 /**
- * @param {{ ownerId: string, teamMemberId: string, name: string, file: object }} params
+ * @param {{ ownerId: string, name: string, file: object }} params
  * @returns {Promise<object>} Created Prospect document
  */
-export const uploadProspect = async ({ ownerId, teamMemberId, name, file }) => {
+export const uploadProspect = async ({ ownerId, name, file }) => {
   if (!name || typeof name !== 'string' || !name.trim()) {
     const err = new Error('Prospect name is required.');
     err.status = 400;
     throw err;
   }
 
-  await getOwnedTeamMember({ ownerId, teamMemberId });
   assertDocx(file);
 
   const prospectId = new mongoose.Types.ObjectId();
-  const b2Key = `${ownerId}/${teamMemberId}/${prospectId}.docx`;
+  const b2Key = `${ownerId}/${prospectId}.docx`;
 
   await b2Client.send(
     new PutObjectCommand({
@@ -51,7 +49,6 @@ export const uploadProspect = async ({ ownerId, teamMemberId, name, file }) => {
   return Prospect.create({
     _id: prospectId,
     ownerId,
-    teamMemberId,
     name: name.trim(),
     b2Key,
     uploadedAt: new Date(),
@@ -59,19 +56,19 @@ export const uploadProspect = async ({ ownerId, teamMemberId, name, file }) => {
 };
 
 /**
- * @param {{ ownerId: string, teamMemberId: string }} params
- * @returns {Promise<object[]>} Prospect documents matching both ownerId and teamMemberId
+ * @param {{ ownerId: string }} params
+ * @returns {Promise<object[]>} Prospect documents owned by the user
  */
-export const listProspects = async ({ ownerId, teamMemberId }) => {
-  return Prospect.find({ ownerId, teamMemberId });
+export const listProspects = async ({ ownerId }) => {
+  return Prospect.find({ ownerId });
 };
 
 /**
- * @param {{ ownerId: string, teamMemberId: string, prospectId: string, file: object }} params
+ * @param {{ ownerId: string, prospectId: string, file: object }} params
  * @returns {Promise<object>} Updated Prospect document
  */
-export const replaceProspectResume = async ({ ownerId, teamMemberId, prospectId, file }) => {
-  const prospect = await Prospect.findOne({ _id: prospectId, ownerId, teamMemberId });
+export const replaceProspectResume = async ({ ownerId, prospectId, file }) => {
+  const prospect = await Prospect.findOne({ _id: prospectId, ownerId });
   if (!prospect) {
     const err = new Error('Prospect not found.');
     err.status = 404;
@@ -95,11 +92,11 @@ export const replaceProspectResume = async ({ ownerId, teamMemberId, prospectId,
 };
 
 /**
- * @param {{ ownerId: string, teamMemberId: string, prospectId: string }} params
+ * @param {{ ownerId: string, prospectId: string }} params
  * @returns {Promise<void>}
  */
-export const deleteProspect = async ({ ownerId, teamMemberId, prospectId }) => {
-  const prospect = await Prospect.findOne({ _id: prospectId, ownerId, teamMemberId });
+export const deleteProspect = async ({ ownerId, prospectId }) => {
+  const prospect = await Prospect.findOne({ _id: prospectId, ownerId });
   if (!prospect) {
     const err = new Error('Prospect not found.');
     err.status = 404;
@@ -117,14 +114,12 @@ export const deleteProspect = async ({ ownerId, teamMemberId, prospectId }) => {
 };
 
 /**
- * @param {{ ownerId: string, teamMemberId: string }} params
+ * @param {{ ownerId: string }} params
  * @returns {Promise<void>}
  */
-export const deleteAllProspectsForTeamMember = async ({ ownerId, teamMemberId }) => {
-  const prospects = await Prospect.find({ ownerId, teamMemberId });
+export const deleteAllProspects = async ({ ownerId }) => {
+  const prospects = await Prospect.find({ ownerId });
   await Promise.all(
-    prospects.map((prospect) =>
-      deleteProspect({ ownerId, teamMemberId, prospectId: prospect._id })
-    )
+    prospects.map((prospect) => deleteProspect({ ownerId, prospectId: prospect._id }))
   );
 };
