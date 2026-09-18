@@ -17,7 +17,7 @@
 | Backend auth           | JWT + bcryptjs                    | Session tokens, password hashing                                      |
 | Backend auth transport | httpOnly cookie (`cookie-parser`) | JWT stored in an httpOnly, secure cookie — never exposed to client JS |
 | Backend rate limiting  | `express-rate-limit`              | Throttles auth endpoints against brute-force attempts                 |
-| Email                  | Brevo HTTP API                     | Verification codes, password reset codes                              |
+| Email                  | Brevo HTTP API                    | Verification codes, password reset codes                              |
 | Document service       | Python (FastAPI)                  | docx formatting + section insertion                                   |
 | Document library       | python-docx                       | Read/write docx structure and styles                                  |
 | PDF conversion         | LibreOffice (headless)            | docx → PDF conversion                                                 |
@@ -27,14 +27,14 @@
 
 ## Deployment
 
-| Service          | Platform | URL                                        | Notes                                     |
-| ---------------- | -------- | ------------------------------------------ | ----------------------------------------- |
-| Frontend         | Vercel   | https://resumate-lake.vercel.app           | Static build, env var `VITE_API_BASE_URL` |
-| Backend API      | Render   | https://resumate-1-i969.onrender.com       | Node.js web service                       |
-| Python docx- svc | Render   | https://resumate-6t5m.onrender.com         | Docker (Python + LibreOffice)             |
-| Database         | MongoDB Atlas | M0 free tier                          | Whitelist `0.0.0.0/0` for Render access   |
-| File storage     | Backblaze B2  | S3-compatible API                     | Free tier, 10GB                           |
-| Email            | Brevo    | HTTP API (port 443)                        | 300 emails/day free, IP-restricted        |
+| Service         | Platform      | URL                                  | Notes                                     |
+| --------------- | ------------- | ------------------------------------ | ----------------------------------------- |
+| Frontend        | Vercel        | https://resumate-lake.vercel.app     | Static build, env var `VITE_API_BASE_URL` |
+| Backend API     | Render        | https://resumate-1-i969.onrender.com | Node.js web service                       |
+| Python docx-svc | Render        | https://resumate-6t5m.onrender.com   | Docker (Python + LibreOffice)             |
+| Database        | MongoDB Atlas | M0 free tier                         | Whitelist `0.0.0.0/0` for Render access   |
+| File storage    | Backblaze B2  | S3-compatible API                    | Free tier, 10GB                           |
+| Email           | Brevo         | HTTP API (port 443)                  | 300 emails/day free, IP-restricted        |
 
 - Frontend Axios services use `VITE_API_BASE_URL` env var (falls back to `/api` proxy in local dev).
 - Backend cookie uses `sameSite: 'none'` + `secure: true` in production for cross-domain auth.
@@ -54,7 +54,7 @@
 | `server/src/routes`       | Endpoint definitions only — maps HTTP verb + path to a controller, no logic                              |
 | `server/src/controllers`  | Request parsing, input validation, calls services, shapes response — no business logic                   |
 | `server/src/services`     | All real logic: B2 access, Groq calls, Python service calls, JWT issuance/verification, password hashing |
-| `server/src/models`       | MongoDB schemas only (User, TeamMember, Prospect) — no logic                                             |
+| `server/src/models`       | MongoDB schemas only (User, Prospect) — no logic                                                         |
 | `server/src/middleware`   | JWT verification, error handling — cross-cutting concerns                                                |
 | `server/src/config`       | DB connection, B2 client config                                                                          |
 | `docx-service/`           | Owns all docx manipulation and PDF conversion — the only place `python-docx` and LibreOffice are invoked |
@@ -63,44 +63,39 @@
 
 ## Storage Model
 
-| Data                                                                            | Where                                                                           | Why                                                                                    |
-| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| User accounts (email, hashed password)                                          | MongoDB Atlas                                                                   | Small, structured, needs querying                                                      |
-| Team member records (name, owning userId)                                       | MongoDB Atlas                                                                   | Small, structured — groups prospects under the correct colleague                       |
-| Prospect metadata (name, B2 file key, upload date, teamMemberId, owning userId) | MongoDB Atlas                                                                   | Small, structured, needs querying                                                      |
-| Prospect resume files (.docx)                                                   | Backblaze B2, keyed `userId/teamMemberId/prospectId.docx`                       | Binary file, not suited to MongoDB document storage                                    |
-| Job description text                                                            | Nowhere — in-memory only, discarded after the request completes                 | Not needed after generation; avoids storing more prospect-adjacent data than necessary |
-| Generated PDF                                                                   | Nowhere persistent — streamed to the user as a download, not stored server-side | User downloads immediately; no need to retain past outputs in MVP                      |
+| Data                                                        | Where                                                                           | Why                                                                                    |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| User accounts (email, hashed password)                      | MongoDB Atlas                                                                   | Small, structured, needs querying                                                      |
+| Prospect metadata (name, B2 file key, upload date, ownerId) | MongoDB Atlas                                                                   | Small, structured, needs querying                                                      |
+| Prospect resume files (.docx)                               | Backblaze B2, keyed `userId/prospectId.docx`                                    | Binary file, not suited to MongoDB document storage                                    |
+| Job description text                                        | Nowhere — in-memory only, discarded after the request completes                 | Not needed after generation; avoids storing more prospect-adjacent data than necessary |
+| Generated PDF                                               | Nowhere persistent — streamed to the user as a download, not stored server-side | User downloads immediately; no need to retain past outputs in MVP                      |
 
-No caching layer in MVP — request volume (15-20/day per user) doesn't justify one.
+No caching layer in MVP — request volume doesn't justify one.
 
 ## Auth and Access Model
 
 - Self-signup: email + password, password hashed with bcryptjs before storage.
-- On signup, a 6-digit verification code (with a short expiry, e.g. 10 minutes) is generated, stored on the User record, and emailed via Brevo API. The user cannot log in until `emailVerified` is true.
-- Forgot password follows the same code pattern: a 6-digit reset code is generated, stored with an expiry, and emailed. Submitting the correct code allows setting a new password. Codes are single-use — cleared from the User record once consumed.
-- On login, the JWT is set as an **httpOnly, secure cookie** — never returned in the JSON response body, never stored in localStorage/Redux. In production (cross-domain), `sameSite: 'none'` allows the cookie on requests from Vercel to Render. In local dev, `sameSite: 'lax'` is used.
-- The frontend never holds the raw token. `authSlice` tracks only `isAuthenticated` and the current user's non-sensitive info (name, email), hydrated via a `GET /api/auth/me` call on app load (reads the cookie server-side, returns user info if valid).
+- On signup, a 6-digit verification code (10-minute expiry) is generated, stored on the User record, and emailed via Brevo API. The user cannot log in until `emailVerified` is true.
+- Forgot password follows the same code pattern. Codes are single-use — cleared from the User record once consumed.
+- On login, the JWT is set as an **httpOnly, secure cookie** — never returned in the JSON response body, never stored in localStorage/Redux. In production (cross-domain), `sameSite: 'none'` allows the cookie on requests from Vercel to Render.
+- The frontend never holds the raw token. `authSlice` tracks only `isAuthenticated` and the current user's non-sensitive info (name, email), hydrated via a `GET /api/auth/me` call on app load.
 - Every request that needs auth relies on the browser automatically attaching the cookie — Axios must be configured with `withCredentials: true`, and CORS must allow `credentials: true` with an explicit client origin (not `*`).
 - `authMiddleware` reads the JWT from the cookie (via `cookie-parser`), not from an `Authorization` header.
-- Login, signup, forgot-password, and resend-code endpoints are rate-limited (`express-rate-limit`) to prevent brute-force and spam abuse — e.g. a modest cap per IP per time window, tight enough to block automated attempts without blocking normal retry behavior from a real user who mistyped a password.
-- Login returns a JWT, sent by the client on every subsequent request (Axios interceptor attaches it).
-- `authMiddleware` verifies the JWT on protected routes before any controller logic runs.
-- Every Prospect record stores an `ownerId` (the authenticated user) and a `teamMemberId` (which colleague it's organized under). Every TeamMember record stores an `ownerId`.
-- All team member and prospect queries (list, get, update, delete) are filtered by `ownerId` matching the authenticated user's id from the JWT — a user can never read or modify another user's team members or prospects, enforced at the service layer, not just the UI.
+- Every Prospect record stores an `ownerId` (the authenticated user). All prospect queries are filtered by `ownerId` — a user can never read or modify another user's prospects, enforced at the service layer.
 - No roles/permissions tiers in MVP — every authenticated user has identical capabilities, scoped to their own data only.
 
 ## AI / Background Processing
 
-- Groq API call is synchronous, request-scoped — no queue or background job in MVP. The user waits for a direct response (target: under ~15 seconds end-to-end including docx processing and PDF conversion).
-- The Python docx-service is called synchronously by Express per generate request — no async job queue. If volume grows enough that generation becomes a bottleneck, this is the first place to introduce a queue (e.g. BullMQ), but it's explicitly out of scope for MVP.
-- No retries are persisted; a failed Groq or docx-service call surfaces an error to the user, who can just click Generate again.
+- Groq API call is synchronous, request-scoped — no queue or background job in MVP.
+- The Python docx-service is called synchronously by Express per generate request.
+- No retries are persisted; a failed Groq or docx-service call surfaces an error to the user.
 
 ## Invariants
 
 1. **No business logic in routes, controllers, or models** — it belongs in a `services/` file.
 2. **No file bytes stored in MongoDB** — resumes live only in Backblaze B2; MongoDB holds references, never binary content.
-3. **Every prospect record is scoped to exactly one `ownerId` and one `teamMemberId`** — no prospect is ever queryable without an owner filter matching the authenticated user, and every team member record is likewise scoped to its `ownerId`.
+3. **Every prospect record is scoped to exactly one `ownerId`** — no prospect is ever queryable without an owner filter matching the authenticated user.
 4. **Job description text is never persisted** — used for one generation request, then discarded.
 5. **Every route that touches prospect or generation data must pass through `authMiddleware`** — no unauthenticated access to user data, ever.
 6. **The Python service is the only place docx files are opened/modified** — Express never manipulates docx content directly.

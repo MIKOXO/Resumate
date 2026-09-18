@@ -2,16 +2,22 @@
 
 ## Application Overview
 
-Resumate is a web-based dashboard that automates the resume update step of a job-search consultancy's placement pipeline. A Resume Update team member selects a prospect from their saved list, pastes in a job description, and the system generates an ATS-compatible Core Competencies section via AI, inserts it into the prospect's resume while preserving that resume's original formatting, and exports a correctly named PDF ready for the Job Applying team to submit. It replaces a fully manual process of copy-pasting into Gemini, hand-editing Word docs, and manually exporting/naming files, cutting a repetitive multi-step task down to upload-once-then-generate.
+Resumate is a web-based dashboard that automates the resume update step of a job-search consultancy's placement pipeline. Each employee gets their own account, adds their assigned prospect(s), and generates a tailored, ATS-compatible resume PDF from a job description — without opening Gemini or manually editing a Word document. The system replaces a fully manual process of copy-pasting into Gemini, hand-editing Word docs, and manually exporting/naming files.
 
 ## Goals
 
 1. Eliminate repetitive manual copy-paste between job postings, Gemini, and Word documents.
 2. Preserve each prospect's original resume formatting (font, layout) without a shared template.
-3. Let each Resume Update team member store their assigned prospects' resumes once and reuse them daily.
+3. Let each employee store their assigned prospect(s)' resumes once and reuse them daily.
 4. Produce a correctly named, ready-to-upload PDF in under 15 seconds per resume.
-5. Support multiple team members with isolated accounts and data.
-6. Ship an MVP that's convincing enough to pitch to the founders for adoption and eventual paid-tier upgrade.
+5. Support multiple employees with isolated accounts and data (12 employees currently).
+6. Ship an MVP stable enough for company-wide adoption.
+
+## Workflow
+
+Each of the 12 employees has their own Resumate account. They add their assigned prospect(s) directly — no team member grouping layer. Daily use: select a prospect → paste the job description → enter company name and date → generate → download PDF → apply manually outside the system.
+
+The "one prospect per employee" rule is a current operational constraint, not a system limit — the app supports adding more than one prospect per account for flexibility.
 
 ## Core User Flow
 
@@ -19,17 +25,15 @@ Resumate is a web-based dashboard that automates the resume update step of a job
 2. System sends a 6-digit verification code to the user's email (Brevo HTTP API).
 3. User enters the code to verify their account; login is blocked until verified.
 4. User logs in.
-5. User adds a Job Applying Team member (e.g. "John") — the colleague whose assigned prospects will be organized under them.
-6. User uploads a prospect's Default Resume (.docx) once, under that team member — saved as a reusable template.
-7. Daily: user expands a team member and selects one of their saved prospects.
-8. User manually copies the job description from the job posting site and pastes it into the system.
-9. User enters company name and date.
-10. User clicks Generate.
-11. System sends the JD to the Groq API using a fixed prompt and receives a Core Competencies section.
-12. System inserts that section at the end of the resume, matching the resume's existing font/style.
-13. System converts the updated document to PDF and names it `Prospect_Company_MMDDYYYY.pdf`.
-14. User downloads the PDF.
-15. User manually uploads the PDF to Google Drive for the Job Applying team (outside the system).
+5. User adds a prospect — name + .docx resume file upload. Stored as a reusable template.
+6. User selects a prospect from their flat prospect list.
+7. User pastes the job description, enters company name and date.
+8. User clicks Generate.
+9. System sends the JD to the Groq API using a fixed prompt and receives a Core Competencies section.
+10. System inserts that section at the end of the resume, matching the resume's existing font/style.
+11. System converts the updated document to PDF and names it `Prospect_Company_MMDDYYYY.pdf`.
+12. User downloads the PDF.
+13. User applies manually outside the system.
 
 ## Features
 
@@ -40,35 +44,32 @@ Resumate is a web-based dashboard that automates the resume update step of a job
 - Resend verification code
 - Forgot password: request a reset code by email, enter code + new password to reset
 - Login with JWT session
-- Per-user data isolation (each user sees only their own team members and prospects)
+- Per-user data isolation (each user sees only their own prospects)
 
 **Settings**
 
 - Edit personal info: name only (email is fixed at signup, tied to verification)
 - Change password (current password required)
+- Delete account (current password required; cascades through all prospects and B2 files)
 
-**Job Applying Team Management**
+**Prospect Management**
 
-- Add a Job Applying Team member (name only)
-- View team members as collapsible groups, each expandable to reveal their prospects
-- Delete a team member (and, by extension, their prospects)
-
-**Prospect Template Management**
-
-- Upload a .docx resume once per prospect, nested under a team member
-- View/select from a saved prospect list within a team member group
-- Replace/re-upload a prospect's resume
-- Delete a prospect
+- Add a prospect (name + .docx upload)
+- View prospects as a flat list
+- Select a prospect to work on
+- Replace a prospect's resume (.docx)
+- Delete a prospect (removes from DB and B2)
 
 **Resume Generation**
 
 - Paste job description text
-- Enter company name and date
+- Enter company name and date (custom date picker)
 - Generate Core Competencies section via Groq API (fixed prompt)
 - Auto-insert section at end of resume, matching original formatting
 - Convert to PDF
 - Auto-name output file (`Prospect_Company_MMDDYYYY.pdf`)
 - Download generated PDF
+- Per-prospect result cache — switching prospects preserves previous download
 
 **Error Handling**
 
@@ -98,9 +99,8 @@ Resumate is a web-based dashboard that automates the resume update step of a job
 
 ## Success Criteria
 
-- A Resume Update team member can go from "job description in hand" to "downloaded, correctly named PDF" without opening Gemini or manually editing a Word document.
+- An employee can go from "job description in hand" to "downloaded, correctly named PDF" without opening Gemini or manually editing a Word document.
 - Generated resumes visually preserve each prospect's original font and layout, with only the new section added.
 - End-to-end generation completes in roughly 15 seconds or less.
-- Two team members can use the system independently with no visibility into each other's prospects.
+- Two employees can use the system independently with no visibility into each other's prospects.
 - The system holds up across a real batch of 15-20 daily resumes without formatting failures.
-- The tool is stable and polished enough to demo to the founders as a pitch for company-wide adoption.

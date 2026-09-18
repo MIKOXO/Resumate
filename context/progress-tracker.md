@@ -63,3 +63,9 @@ Update this file after every meaningful implementation change.
 - Feature 16: react-day-picker v10 installed; Popover/Calendar manually scaffolded; `selectProspect` payload changed to `{ prospectId, teamMemberId }` — one call site updated in ProspectList. Error banner in GenerateWorkspace is inline (no auto-dismiss) — intentional, unlike auth forms.
 - Feature 17 post-build: Settings page restructured from two stacked cards into a single card with a segmented Profile/Security tab switcher (motion sliding pill via `layoutId`). Both forms stay mounted so their state survives tab switches. UI-only change; no spec files touched.
 - Feature 17 post-build (2): removed prospect-count badge from team member rows; replaced team member delete icon and prospect replace/delete icons with the navbar's DropdownMenu pattern — a single 3-dot (MoreVertical) menu per row (`Delete` destructive on team members; `Replace resume` + `Delete` on prospects). Existing dialog logic untouched.
+
+## Refactor: Remove Team Member Layer (Planned)
+
+**Reason:** Workflow changed. Each employee now owns their own account and works directly with their assigned prospect(s) — no team member grouping needed. The `TeamMember` model and everything built around it is being removed. Prospect ownership moves up one level: directly under `User`.
+
+**Scope:** See `feature-specs/19-remove-team-member.md` for full plan.
