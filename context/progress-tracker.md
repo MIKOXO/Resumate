@@ -58,6 +58,7 @@ Update this file after every meaningful implementation change.
 
 ## Session Notes
 
+- PDF conversion hardening: `converter.py` now gives each LibreOffice invocation an isolated temporary user profile and working directory, preventing profile-lock collisions during concurrent requests. All artifacts are cleaned automatically; a 12-way concurrent conversion smoke test passed.
 - Feature 03: EMAIL\_\* vars set — signup emails verified end-to-end. Test users cleaned up.
 - Feature 05/06: cascade delete via shared `getOwnedTeamMember` + dynamic `import()` (ESM circular import). B2 DeleteObject idempotent. Test data cleaned up.
 - Feature 14: radix-ui needed for faithful shadcn (approved). `Logo` reused as-is (links to /login, bounces back via guard) — fix when touched. Left panel hidden below `md`.

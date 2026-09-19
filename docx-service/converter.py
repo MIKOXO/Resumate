@@ -11,46 +11,43 @@ def convert_to_pdf(docx_bytes: bytes) -> bytes:
     Converts a .docx bytes payload to PDF bytes via LibreOffice headless.
     Temp files are always cleaned up in a finally block.
     """
-    tmp_dir = Path(tempfile.gettempdir())
     unique = uuid.uuid4().hex
-    docx_path = tmp_dir / f"{unique}.docx"
-    pdf_path = tmp_dir / f"{unique}.pdf"
-    pdf_bytes = None
 
-    try:
+    # LibreOffice uses a single user profile by default. A separate profile is
+    # required per request so concurrent conversions cannot contend for its lock.
+    with tempfile.TemporaryDirectory(prefix="resumate-pdf-") as temp_dir_name:
+        temp_dir = Path(temp_dir_name)
+        profile_dir = temp_dir / "libreoffice-profile"
+        profile_dir.mkdir()
+        docx_path = temp_dir / f"{unique}.docx"
+        pdf_path = temp_dir / f"{unique}.pdf"
         docx_path.write_bytes(docx_bytes)
 
-        result = subprocess.run(
-            [
-                "soffice",
-                "--headless",
-                "--convert-to", "pdf",
-                "--outdir", str(tmp_dir),
-                str(docx_path),
-            ],
-            capture_output=True,
-            text=True,
-            timeout=LIBREOFFICE_TIMEOUT_SECONDS,
-        )
+        try:
+            result = subprocess.run(
+                [
+                    "soffice",
+                    f"-env:UserInstallation={profile_dir.as_uri()}",
+                    "--headless",
+                    "--convert-to", "pdf",
+                    "--outdir", str(temp_dir),
+                    str(docx_path),
+                ],
+                capture_output=True,
+                text=True,
+                timeout=LIBREOFFICE_TIMEOUT_SECONDS,
+            )
+        except FileNotFoundError as exc:
+            raise RuntimeError("LibreOffice executable 'soffice' was not found.") from exc
+        except subprocess.TimeoutExpired as exc:
+            raise RuntimeError(
+                f"LibreOffice conversion timed out after {LIBREOFFICE_TIMEOUT_SECONDS} seconds."
+            ) from exc
 
         if result.returncode != 0 or not pdf_path.exists():
-            stderr = result.stderr.strip() or result.stdout.strip()
-            raise RuntimeError(f"LibreOffice conversion failed: {stderr}")
+            output = (result.stderr.strip() or result.stdout.strip() or "no output")
+            raise RuntimeError(
+                f"LibreOffice conversion failed (exit {result.returncode}): {output}"
+            )
 
-        pdf_bytes = pdf_path.read_bytes()
-
-    except subprocess.TimeoutExpired as exc:
-        raise RuntimeError(
-            f"LibreOffice conversion timed out after {LIBREOFFICE_TIMEOUT_SECONDS} seconds."
-        ) from exc
-
-    finally:
-        if docx_path.exists():
-            docx_path.unlink()
-        if pdf_path.exists():
-            pdf_path.unlink()
-
-    if pdf_bytes is None:
-        raise RuntimeError("LibreOffice conversion failed without producing a PDF.")
-
-    return pdf_bytes
+        return pdf_path.read_bytes()
