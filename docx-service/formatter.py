@@ -278,7 +278,7 @@ def _apply_fallback_run_style(run, font_name, font_size, bold):
 
 
 def _local_body_spacing(doc, excluded_paragraphs=(), count=5, paragraphs=None):
-    """Return the most common spacing tuple from the last N body paragraphs."""
+    """Return the dominant effective spacing near the insertion point."""
     excluded_ids = {id(paragraph) for paragraph in excluded_paragraphs}
     paragraph_iterable = paragraphs if paragraphs is not None else _paragraphs(doc)
     body_paras = [
@@ -288,53 +288,13 @@ def _local_body_spacing(doc, excluded_paragraphs=(), count=5, paragraphs=None):
     tail = body_paras[-count:] if len(body_paras) > count else body_paras
     if not tail:
         return None
-    tally = Counter()
-    for paragraph in tail:
-        tally[_paragraph_spacing(paragraph)] += 1
-    return tally.most_common(1)[0][0]
-
-
-def _local_body_formatting(doc, excluded_paragraphs=(), count=5, paragraphs=None):
-    """Return the most common (alignment, indentation) from the last N body paragraphs."""
-    excluded_ids = {id(paragraph) for paragraph in excluded_paragraphs}
-    paragraph_iterable = paragraphs if paragraphs is not None else _paragraphs(doc)
-    body_paras = [
-        paragraph for paragraph in paragraph_iterable
-        if paragraph.text.strip() and id(paragraph) not in excluded_ids
-    ]
-    tail = body_paras[-count:] if len(body_paras) > count else body_paras
-    if not tail:
-        return None, None
-    align_tally = Counter()
-    indent_tally = Counter()
-    for paragraph in tail:
-        align_tally[_paragraph_alignment(paragraph)] += 1
-        indent_tally[_paragraph_indentation(paragraph)] += 1
-    return align_tally.most_common(1)[0][0], indent_tally.most_common(1)[0][0]
-
-
-def _ensure_alignment(paragraph, alignment):
-    """Set alignment on a paragraph if a value was detected."""
-    if alignment is not None:
-        paragraph.paragraph_format.alignment = alignment
-
-
-def _ensure_indentation(paragraph, indentation):
-    """Set left_indent, right_indent, first_line_indent on a paragraph."""
-    if indentation is None:
-        return
-    left, right, first_line = indentation
-    pf = paragraph.paragraph_format
-    if left is not None:
-        pf.left_indent = left
-    if right is not None:
-        pf.right_indent = right
-    if first_line is not None:
-        pf.first_line_indent = first_line
+    return Counter(_paragraph_spacing(paragraph) for paragraph in tail).most_common(1)[0][0]
 
 
 def _ensure_spacing(paragraph, spacing_tuple):
-    """Set spacing on a paragraph from the detected profile."""
+    """Apply a detected effective spacing profile when no bullet exists to clone."""
+    if spacing_tuple is None:
+        return
     line_spacing, line_rule, space_before, space_after = spacing_tuple
     pf = paragraph.paragraph_format
     if line_spacing is not None:
@@ -356,6 +316,46 @@ def _strip_numbering(pPr):
         pPr.remove(numPr)
 
 
+def _uses_native_list(paragraph):
+    """Identify Word list formatting that is not represented in paragraph text."""
+    if paragraph is None:
+        return False
+    pPr = paragraph._p.pPr
+    has_numbering = pPr is not None and pPr.find(qn("w:numPr")) is not None
+    style_name = (paragraph.style.name or "").lower()
+    return has_numbering or "list bullet" in style_name
+
+
+def _is_bullet_paragraph(paragraph):
+    """Identify either visible text bullets or Word's native bullet-list formatting."""
+    if paragraph is None:
+        return False
+    return (
+        paragraph.text.lstrip().startswith(("•", "◦", "▪", "- ", "– ", "— "))
+        or _uses_native_list(paragraph)
+    )
+
+
+def _bullet_reference(paragraphs, fallback):
+    """Use the last visible bullet because it best matches the append location."""
+    return next(
+        (paragraph for paragraph in reversed(paragraphs) if _is_bullet_paragraph(paragraph)),
+        fallback,
+    )
+
+
+def _last_body_reference(paragraphs, header_paragraph, fallback):
+    """Use the nearest non-header body paragraph when the resume has no bullets."""
+    return next(
+        (
+            paragraph
+            for paragraph in reversed(paragraphs)
+            if paragraph.text.strip() and paragraph is not header_paragraph
+        ),
+        fallback,
+    )
+
+
 def insert_core_competencies(docx_bytes, bullet_lines, filename="<unknown>"):
     """Append a formatting-matched Core Competencies section to a .docx file."""
     doc = Document(io.BytesIO(docx_bytes))
@@ -369,32 +369,22 @@ def insert_core_competencies(docx_bytes, bullet_lines, filename="<unknown>"):
         [header_paragraph] if header_paragraph else [],
         paragraphs,
     )
+    body_paragraph = _last_body_reference(paragraphs, header_paragraph, body_paragraph)
+    body_paragraph = _bullet_reference(paragraphs, body_paragraph)
+    has_existing_bullet = _is_bullet_paragraph(body_paragraph)
+    uses_native_list = _uses_native_list(body_paragraph)
     body_font_name, body_font_size = initial_body_name, initial_body_size
     if body_paragraph:
         body_font_name, body_font_size = _style_signature(body_paragraph, doc)[:2]
-
-    # Detect spacing, alignment, and indentation from the paragraphs closest to the insertion point.
-    body_spacing = _local_body_spacing(doc, [header_paragraph] if header_paragraph else (), paragraphs=paragraphs)
-    body_alignment, body_indentation = _local_body_formatting(
+    body_spacing = _local_body_spacing(
         doc,
         [header_paragraph] if header_paragraph else (),
         paragraphs=paragraphs,
     )
-    header_spacing = _paragraph_spacing(header_paragraph) if header_paragraph else None
-    header_alignment = _paragraph_alignment(header_paragraph) if header_paragraph else None
-    header_indentation = _paragraph_indentation(header_paragraph) if header_paragraph else None
 
     header_para = doc.add_paragraph()
     if header_paragraph:
         _copy_paragraph_format(header_paragraph, header_para)
-    if header_spacing:
-        _ensure_spacing(header_para, header_spacing)
-    if header_alignment is not None:
-        _ensure_alignment(header_para, header_alignment)
-    if header_indentation is not None:
-        _ensure_indentation(header_para, header_indentation)
-    # Keep the source header's horizontal layout while starting this section cleanly.
-    header_para.paragraph_format.page_break_before = True
     header_run = header_para.add_run(
         "CORE COMPETENCIES" if header_style["all_caps"] else "Core Competencies"
     )
@@ -414,14 +404,11 @@ def insert_core_competencies(docx_bytes, bullet_lines, filename="<unknown>"):
         bullet_para = doc.add_paragraph()
         if body_paragraph:
             _copy_paragraph_format(body_paragraph, bullet_para)
-            _strip_numbering(bullet_para._p.pPr)
-        if body_spacing:
+            if not uses_native_list:
+                _strip_numbering(bullet_para._p.pPr)
+        if not has_existing_bullet:
             _ensure_spacing(bullet_para, body_spacing)
-        if body_alignment is not None:
-            _ensure_alignment(bullet_para, body_alignment)
-        if body_indentation is not None:
-            _ensure_indentation(bullet_para, body_indentation)
-        bullet_run = bullet_para.add_run(f"\u2022 {line}")
+        bullet_run = bullet_para.add_run(line if uses_native_list else f"\u2022 {line}")
         if body_source_run:
             _copy_run_format(body_source_run, bullet_run)
         else:

@@ -14,6 +14,13 @@ class FormatterTests(unittest.TestCase):
         document.save(buffer)
         return buffer.getvalue()
 
+    def _body_children_xml(self, document):
+        return [
+            child.xml
+            for child in document.element.body
+            if child.tag != formatter.qn("w:sectPr")
+        ]
+
     def test_detects_body_size_inherited_from_normal_style(self):
         document = Document()
         document.styles["Normal"].font.name = "Arial"
@@ -36,6 +43,7 @@ class FormatterTests(unittest.TestCase):
         header.paragraph_format.space_before = Pt(12)
         header.paragraph_format.space_after = Pt(4)
         header.paragraph_format.left_indent = Pt(18)
+        header.paragraph_format.keep_with_next = True
         header_run = header.runs[0]
         header_run.font.name = "Aptos Display"
         header_run.font.size = Pt(14)
@@ -52,9 +60,72 @@ class FormatterTests(unittest.TestCase):
         self.assertTrue(core_header.runs[0].font.bold)
         self.assertEqual(core_header.paragraph_format.space_before, Pt(12))
         self.assertEqual(core_header.paragraph_format.left_indent, Pt(18))
-        self.assertTrue(core_header.paragraph_format.page_break_before)
+        self.assertTrue(core_header.paragraph_format.keep_with_next)
+        self.assertIsNone(core_header.paragraph_format.page_break_before)
         self.assertEqual(bullet.text, "• Relevant skill")
         self.assertEqual(formatter._paragraph_value(bullet, result, "size"), Pt(10))
+
+    def test_copies_the_last_existing_bullet_style(self):
+        document = Document()
+        document.styles["Normal"].font.name = "Calibri"
+        document.styles["Normal"].font.size = Pt(10)
+        document.add_paragraph("This long body paragraph establishes a different body style.")
+        header = document.add_paragraph("SKILLS")
+        header.runs[0].font.bold = True
+        header.runs[0].font.size = Pt(13)
+        source_bullet = document.add_paragraph("• Existing skill")
+        source_bullet.paragraph_format.left_indent = Pt(28)
+        source_bullet.paragraph_format.first_line_indent = Pt(-14)
+        source_bullet.paragraph_format.space_after = Pt(5)
+        source_bullet.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+        source_run = source_bullet.runs[0]
+        source_run.font.name = "Arial"
+        source_run.font.size = Pt(9)
+        source_run.font.italic = True
+
+        result = Document(io.BytesIO(formatter.insert_core_competencies(
+            self._document_bytes(document), ["New skill"], "resume.docx"
+        )))
+        bullet = result.paragraphs[-1]
+
+        self.assertEqual(bullet.text, "• New skill")
+        self.assertEqual(bullet._p.pPr.xml, source_bullet._p.pPr.xml)
+        self.assertEqual(bullet.runs[0].font.name, "Arial")
+        self.assertEqual(bullet.runs[0].font.size, Pt(9))
+        self.assertTrue(bullet.runs[0].font.italic)
+
+    def test_preserves_native_word_bullet_list_formatting(self):
+        document = Document()
+        document.add_paragraph("Body text before the skills list.")
+        source_bullet = document.add_paragraph("Existing skill", style="List Bullet")
+
+        result = Document(io.BytesIO(formatter.insert_core_competencies(
+            self._document_bytes(document), ["New skill"], "resume.docx"
+        )))
+        bullet = result.paragraphs[-1]
+
+        self.assertEqual(bullet.text, "New skill")
+        self.assertEqual(bullet.style.name, "List Bullet")
+        self.assertEqual(bullet._p.pPr.xml, source_bullet._p.pPr.xml)
+
+    def test_existing_document_content_is_not_modified(self):
+        document = Document()
+        document.add_paragraph("Original summary text.")
+        header = document.add_paragraph("EXPERIENCE")
+        header.runs[0].font.bold = True
+        document.add_paragraph("Original experience text.")
+        source_bytes = self._document_bytes(document)
+        source_document = Document(io.BytesIO(source_bytes))
+        original_children = self._body_children_xml(source_document)
+
+        result = Document(io.BytesIO(formatter.insert_core_competencies(
+            source_bytes, ["New skill one", "New skill two"], "resume.docx"
+        )))
+
+        self.assertEqual(
+            self._body_children_xml(result)[:len(original_children)],
+            original_children,
+        )
 
     def test_title_case_headers_keep_title_case_section_name(self):
         document = Document()

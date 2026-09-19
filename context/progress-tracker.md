@@ -59,6 +59,7 @@ Update this file after every meaningful implementation change.
 ## Session Notes
 
 - PDF conversion hardening: `converter.py` now gives each LibreOffice invocation an isolated temporary user profile and working directory, preventing profile-lock collisions during concurrent requests. All artifacts are cleaned automatically; a 12-way concurrent conversion smoke test passed.
+- DOCX formatting hardening: Core Competencies now clones one detected header paragraph exactly and uses the nearest existing bullet style (including native Word bullet lists). It no longer forces a page break or combines formatting from unrelated paragraphs. Regression tests assert the original document XML is unchanged; the updated DOCX-to-PDF path was smoke-tested.
 - Feature 03: EMAIL\_\* vars set — signup emails verified end-to-end. Test users cleaned up.
 - Feature 05/06: cascade delete via shared `getOwnedTeamMember` + dynamic `import()` (ESM circular import). B2 DeleteObject idempotent. Test data cleaned up.
 - Feature 14: radix-ui needed for faithful shadcn (approved). `Logo` reused as-is (links to /login, bounces back via guard) — fix when touched. Left panel hidden below `md`.
