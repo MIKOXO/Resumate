@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useProspects } from '@/hooks/useProspects'
 import { useGeneration } from '@/hooks/useGeneration'
 import DatePicker from '@/components/DatePicker'
+import { toYMD } from '@/lib/date'
 import ResultCard from '@/components/ResultCard'
 import { Spinner } from '@/components/authUi'
 import useAutoDismiss from '@/hooks/useAutoDismiss'
@@ -15,7 +16,7 @@ const GenerateWorkspace = () => {
 
   const [jobDescription, setJobDescription] = useState('')
   const [companyName, setCompanyName] = useState('')
-  const [date, setDate] = useState(null)
+  const [date, setDate] = useState(() => toYMD(new Date()))
 
   const prospect = list.find((p) => p._id === selectedProspectId)
 
