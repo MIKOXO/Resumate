@@ -1,7 +1,9 @@
 import io
 import unittest
+import warnings
 
 from docx import Document
+from docx.enum.style import WD_STYLE_TYPE
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING
 from docx.shared import Pt
 
@@ -256,6 +258,28 @@ class FormatterTests(unittest.TestCase):
 
         numPr = bullet._p.pPr.find(formatter.qn("w:numPr")) if bullet._p.pPr is not None else None
         self.assertIsNone(numPr)
+
+    def test_document_default_value_resolves_without_style_id_deprecation(self):
+        document = Document()
+        document.styles["Normal"].font.name = "Georgia"
+        document.styles["Normal"].font.size = Pt(11)
+        normal_style = document.styles.default(WD_STYLE_TYPE.PARAGRAPH)
+        name_element = normal_style.element.find(formatter.qn("w:name"))
+        self.assertIsNotNone(name_element)
+        normal_style.element.remove(name_element)
+        self.assertIsNone(document.styles._element.get_by_name("Normal"))
+        document.add_paragraph("Body paragraph.")
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            font_name = formatter._document_default_value(document, "name")
+            font_size = formatter._document_default_value(document, "size")
+
+        self.assertEqual(font_name, "Georgia")
+        self.assertEqual(font_size, Pt(11))
+        self.assertFalse(
+            any("style lookup by style_id is deprecated" in str(w.message) for w in caught)
+        )
 
 
 if __name__ == "__main__":

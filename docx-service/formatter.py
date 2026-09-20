@@ -4,6 +4,7 @@ from collections import Counter
 from copy import deepcopy
 
 from docx import Document
+from docx.enum.style import WD_STYLE_TYPE
 from docx.shared import Pt
 from docx.oxml.ns import qn
 
@@ -45,7 +46,7 @@ def _style_value(style, property_name):
 
 def _document_default_value(doc, property_name):
     """Read Word's document default when no run or named style defines it."""
-    value = _style_value(doc.styles["Normal"], property_name)
+    value = _style_value(doc.styles.default(WD_STYLE_TYPE.PARAGRAPH), property_name)
     if value is not None:
         return value
 
