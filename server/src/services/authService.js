@@ -1,9 +1,9 @@
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 import User from '../models/User.js';
 import { sendEmail } from './emailService.js';
 import { buildEmailHtml, codeBlock } from './emailTemplate.js';
+import { hashPassword, isBcryptHash, verifyPassword } from './passwordService.js';
 import { deleteAllProspects } from './prospectService.js';
 
 const SAFE_FIELDS = '_id name email emailVerified createdAt';
@@ -110,7 +110,7 @@ export const validatePassword = (password) => {
  * @returns {Promise<void>} Throws a 400 error if newPassword matches the current hash
  */
 const rejectSamePassword = async (newPassword, currentHash) => {
-  const isSame = await bcrypt.compare(newPassword, currentHash);
+  const isSame = await verifyPassword(newPassword, currentHash);
   if (isSame) {
     const err = new Error('New password must be different from your current password.');
     err.status = 400;
@@ -130,7 +130,7 @@ export const signup = async ({ name, email, password }) => {
     throw err;
   }
 
-  const hash = await bcrypt.hash(password, 12);
+  const hash = await hashPassword(password);
   const user = await User.create({ name, email, password: hash });
 
   const { code, expiresAt } = generateCode();
@@ -165,7 +165,7 @@ export const login = async ({ email, password }) => {
     throw err;
   }
 
-  const match = await bcrypt.compare(password, user.password);
+  const match = await verifyPassword(password, user.password);
   if (!match) {
     const err = new Error('Invalid credentials.');
     err.status = 401;
@@ -176,6 +176,12 @@ export const login = async ({ email, password }) => {
     const err = new Error('Please verify your email before logging in.');
     err.status = 403;
     throw err;
+  }
+
+  // Migrate legacy bcrypt hashes to scrypt on successful login.
+  if (isBcryptHash(user.password)) {
+    user.password = await hashPassword(password);
+    await user.save();
   }
 
   return toSafeUser(user);
@@ -349,7 +355,7 @@ export const resetPassword = async ({ code, newPassword }) => {
 
   await rejectSamePassword(newPassword, user.password);
 
-  user.password = await bcrypt.hash(newPassword, 12);
+  user.password = await hashPassword(newPassword);
   user.resetCode = null;
   user.resetCodeExpiry = null;
   user.lastResetCodeSentAt = null;
@@ -391,7 +397,7 @@ export const changePassword = async ({ userId, currentPassword, newPassword }) =
     throw err;
   }
 
-  const currentMatch = await bcrypt.compare(currentPassword, user.password);
+  const currentMatch = await verifyPassword(currentPassword, user.password);
   if (!currentMatch) {
     const err = new Error('Current password is incorrect.');
     err.status = 400;
@@ -407,7 +413,7 @@ export const changePassword = async ({ userId, currentPassword, newPassword }) =
 
   await rejectSamePassword(newPassword, user.password);
 
-  user.password = await bcrypt.hash(newPassword, 12);
+  user.password = await hashPassword(newPassword);
   await user.save();
 
   sendPasswordChangedEmail({ to: user.email, name: user.name }).catch((err) =>
@@ -429,7 +435,7 @@ export const deleteAccount = async ({ userId, password }) => {
     throw err;
   }
 
-  const match = await bcrypt.compare(password, user.password);
+  const match = await verifyPassword(password, user.password);
   if (!match) {
     const err = new Error('Current password is incorrect.');
     err.status = 400;
